@@ -1,0 +1,192 @@
+num	SampleID	Sample_name	Sample_name2	Sample_name3	Sequencing	Site.name	Site.name	Sample 	AreaSample	Type of rocks	Rocks_v2	Latitude	Longitude	Sun exposure	Elevation (m asl)	Sea distance (km)	OriginalYear	Continent	Fossil	Year of collection
+74	Mars_74	Mars_74	Mars-74	Mars-74	FEM	Anderson Ridge	Anderson Ridge	1	Northen Victoria Land	Granite	Granite	-74.714167	162.617778	n/a	500	2	11-Oct	Antarctica 	0	2010
+87	Mars_87b	Mars_87b	Mars-87b	Mars-87b	FEM	Anderson Ridge	Anderson Ridge	967-x	Northen Victoria Land	Granite	Granite	-74.714167	162.617778	n/a	500	2	1996	Antarctica 	0	1996
+2	Mars_2	Mars_2	Mars-2	Mars-2	FEM	Archambault Ridge	Archambault Ridge	1	Northen Victoria Land	Granite	Granite	-74.74069	162.67567	n/a	2725	90	11-Oct	Antarctica	0	2010
+3	Mars_3	Mars_3	Mars-3	Mars-3	FEM	Archambault Ridge	Archambault Ridge	3	Northen Victoria Land	Sandstone	Sandstone	-73.66942	162.59369	n/a	3400	85	11-Oct	Antarctica	0	2010
+96	BatPronordMG_2	BatPronordMG_2	BatPronordMG_2	BatPronordMG_2	JGI	Battleship Promontory	Battleship Promontory	4	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	North	834	35.5	15-16	Antarctica	0	2015
+97	ButProsudMG_2	ButProsudMG_2	ButProsudMG_2	ButProsudMG_2	JGI	Battleship Promontory	Battleship Promontory	4	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	South	834	35.5	15-16	Antarctica	0	2015
+123	FICUS_Selbmann_12	FICUS_Selbmann_1_17	FICUS_Selbmann_1_17	FICUS_Selbmann_1_9	JGI-FICUS	Battleship Promontory	Battleship Promontory	2	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	North	910	n/a	15-16	Antarctica	0	2015
+122	FICUS_Selbmann_11	FICUS_Selbmann_1_18	FICUS_Selbmann_1_18	FICUS_Selbmann_1_8	JGI-FICUS	Battleship Promontory	Battleship Promontory	1	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	North	910	n/a	15-16	Antarctica	0	2015
+125	FICUS_Selbmann_14	FICUS_Selbmann_1_19	FICUS_Selbmann_1_19	FICUS_Selbmann_1_4	JGI-FICUS	Battleship Promontory	Battleship Promontory	6	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	North	910	n/a	15-16	Antarctica	0	2015
+124	FICUS_Selbmann_13	FICUS_Selbmann_1_20	FICUS_Selbmann_1_20	FICUS_Selbmann_1_3	JGI-FICUS	Battleship Promontory	Battleship Promontory	3	Dry Valleys	Sandstone	Sandstone	-76.901	160.91	North	910	n/a	15-16	Antarctica	0	2015
+175	FICUS_Selbmann_76	FICUS_Selbmann_7_13	FICUS_Selbmann_7_13	FICUS_Selbmann_7_10	JGI-FICUS	Battleship Promontory	Battleship Promontory	9a	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+177	FICUS_Selbmann_78	FICUS_Selbmann_7_14	FICUS_Selbmann_7_14	FICUS_Selbmann_7_8	JGI-FICUS	Battleship Promontory	Battleship Promontory	5	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	2004	Antarctica	0	2004
+176	FICUS_Selbmann_77	FICUS_Selbmann_7_15	FICUS_Selbmann_7_15	FICUS_Selbmann_7_7	JGI-FICUS	Battleship Promontory	Battleship Promontory	2	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	2004	Antarctica	0	2004
+174	FICUS_Selbmann_74	FICUS_Selbmann_7_20	FICUS_Selbmann_7_20	FICUS_Selbmann_7_4	JGI-FICUS	Battleship Promontory	Battleship Promontory	6	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	2004	Antarctica	0	2004
+185	FICUS_Selbmann_89	FICUS_Selbmann_8_15	FICUS_Selbmann_8_15	FICUS_Selbmann_8_8	JGI-FICUS	Battleship Promontory	Battleship Promontory	2	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+184	FICUS_Selbmann_88	FICUS_Selbmann_8_16	FICUS_Selbmann_8_16	FICUS_Selbmann_8_7	JGI-FICUS	Battleship Promontory	Battleship Promontory	1	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+191	FICUS_Selbmann_96	FICUS_Selbmann_9_5	FICUS_Selbmann_9_11	FICUS_Selbmann_9_5	JGI-FICUS	Battleship Promontory	Battleship Promontory	NA	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+188	FICUS_Selbmann_93	FICUS_Selbmann_9_12	FICUS_Selbmann_9_12	FICUS_Selbmann_9_2	JGI-FICUS	Battleship Promontory	Battleship Promontory	7	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+187	FICUS_Selbmann_92	FICUS_Selbmann_9_13	FICUS_Selbmann_9_13	FICUS_Selbmann_9	JGI-FICUS	Battleship Promontory	Battleship Promontory	6	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+190	FICUS_Selbmann_95	FICUS_Selbmann_9_7	FICUS_Selbmann_9_14	FICUS_Selbmann_9_7	JGI-FICUS	Battleship Promontory	Battleship Promontory	NA	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+189	FICUS_Selbmann_94	FICUS_Selbmann_9_6	FICUS_Selbmann_9_15	FICUS_Selbmann_9_6	JGI-FICUS	Battleship Promontory	Battleship Promontory	NA	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+186	FICUS_Selbmann_91	FICUS_Selbmann_9_16	FICUS_Selbmann_9_16	FICUS_Selbmann_9_4	JGI-FICUS	Battleship Promontory	Battleship Promontory	5	Dry Valleys	Sandstone	Sandstone	-76.91	160.935	n/a	1000	n/a	11-Oct	Antarctica	0	2010
+82	Mars_82	Mars_82	Mars-82	Mars-82	FEM	Convoy Range	Convoy Range	3a	Dry Valleys	Sandstone	Sandstone	-76.965944	160.765556	n/a	n/a	n/a	2004	Antarctica 	0	2004
+83	Mars_83	Mars_83	Mars-83	Mars-83	FEM	Convoy Range	Convoy Range	3b	Dry Valleys	Sandstone	Sandstone	-76.941667	161.078889	n/a	n/a	n/a	2004	Antarctica 	0	2004
+84	Mars_84	Mars_84	Mars-84	Mars-84	FEM	Convoy Range	Convoy Range	8	Dry Valleys	Sandstone	Sandstone	-76.965944	160.765556	n/a	n/a	n/a	2004	Antarctica 	0	2004
+65	Mars_65	Mars_65	Mars-65	Mars-65	FEM	Crater Circle	Crater Circle	1	Northen Victoria Land	Granite	Granite	-72.60333	169.34883	n/a	120	1.5	11-Oct	Antarctica 	0	2010
+73	Mars_73	Mars_73	Mars-73	Mars-73	FEM	Crater Circle	Crater Circle	1	Northen Victoria Land	Granite	Granite	-72.60333	169.34883	n/a	120	32	11-Oct	Antarctica 	0	2010
+88	Mars_88	Mars_88	Mars-88	Mars-88	FEM	Dufayel Island 	Dufayel Island 	012-12	Antarctic Peninsula	Basalt/Quartz	Basalt/Dolerite	-62.16608	-58.55799	n/a	30	0	2001	Antarctica 	0	2001
+107	FingerMtnordMG_2	FingerMtnordMG_2	FingerMtnordMG_2	FingerMtnordMG_2	JGI	Finger Mt.	Finger Mt.	6	Dry Valleys	Sandstone	Sandstone	-77.911	161.577	North	1720	n/a	15-16	Antarctica	0	2015
+108	FingerMtsudMG_2	FingerMtsudMG_2	FingerMtsudMG_2	FingerMtsudMG_2	JGI	Finger Mt.	Finger Mt.	6	Dry Valleys	Sandstone	Sandstone	-77.755	160.745	South	1720	n/a	15-16	Antarctica	0	2015
+10	Mars_10	Mars_10	Mars-10	Mars-10	FEM	Finger Mt.	Finger Mt.	1	Dry Valleys	Sandstone	Sandstone	-77.75025	160.74569	North	1720	n/a	15-16	Antarctica	0	2015
+11	Mars_11	Mars_11	Mars-11	Mars-11	FEM	Finger Mt.	Finger Mt.	2	Dry Valleys	Sandstone	Sandstone	-77.75026	160.74589	North	1720	n/a	15-16	Antarctica	0	2015
+12	Mars_12	Mars_12	Mars-12	Mars-12	FEM	Finger Mt.	Finger Mt.	3	Dry Valleys	Sandstone	Sandstone	-77.75027	160.74586	North	1720	n/a	15-16	Antarctica	0	2015
+13	Mars_13	Mars_13	Mars-13	Mars-13	FEM	Finger Mt.	Finger Mt.	5	Dry Valleys	Sandstone	Sandstone	-77.75025	160.74553	North	1720	n/a	15-16	Antarctica	0	2015
+15	Mars_15	Mars_15	Mars-15	Mars-15	FEM	Finger Mt.	Finger Mt.	3	Dry Valleys	Sandstone	Sandstone	-77.75281	160.74586	South	1720	n/a	15-16	Antarctica	0	2015
+14	Mars_14	Mars_14	Mars-14	Mars-14	FEM	Finger Mt. 	Finger Mt. 	1	Dry Valleys	Sandstone	Sandstone	-77.75281	160.74444	South	1720	n/a	15-16	Antarctica	0	2015
+16	Mars_16	Mars_16	Mars-16	Mars-16	FEM	Finger Mt. 	Finger Mt. 	4	Dry Valleys	Sandstone	Sandstone	-77.75281	160.74422	South	1720	n/a	15-16	Antarctica	0	2015
+17	Mars_17	Mars_17	Mars-17	Mars-17	FEM	Finger Mt. 	Finger Mt. 	5	Dry Valleys	Sandstone	Sandstone	-77.75286	160.74453	South	1720	n/a	15-16	Antarctica	0	2015
+18	Mars_18	Mars_18	Mars-18	Mars-18	FEM	Finger Mt. 	Finger Mt. 	6	Dry Valleys	Sandstone	Sandstone	-77.75278	160.74422	South	1720	n/a	15-16	Antarctica	0	2015
+4	Mars_4b	Mars_4b	Mars-4b	Mars-4b	FEM	Ford Peak	Finger Mt. 	3	Northen Victoria Land	Sandstone	Sandstone	-75.69142	160.43256	n/a	1190	57	11-Oct	Antarctica	0	2010
+37	Mars_37b	Mars_37b	Mars-37b	Mars-37b	FEM	Harrow Peak	Harrow Peak	1	Northen Victoria Land	Granite	Granite	-75.666667	161.26667	n/a	1230	6.5	11-Oct	Antarctica	0	2010
+23	Mars_23	Mars_23	Mars-23	Mars-23	FEM	Helliwell Hills 	Helliwell Hills 	1	Northen Victoria Land	Sandstone	Sandstone	-71.79353	161.995717	n/a	675	233	15-16	Antarctica	0	2015
+24	Mars_24	Mars_24	Mars-24	Mars-24	FEM	Helliwell Hills 	Helliwell Hills 	2	Northen Victoria Land	Sandstone	Sandstone	-71.73167	161.375667	n/a	995	233	15-16	Antarctica	0	2015
+25	Mars_25	Mars_25	Mars-25	Mars-25	FEM	Helliwell Hills 	Helliwell Hills 	3a	Northen Victoria Land	Sandstone	Sandstone	-71.72968	161.3879	n/a	1028	233	15-16	Antarctica	0	2015
+26	Mars_26	Mars_26	Mars-26	Mars-26	FEM	Helliwell Hills 	Helliwell Hills 	3b	Northen Victoria Land	Sandstone	Sandstone	-71.72968	161.3879	n/a	1028	233	15-16	Antarctica	0	2015
+27	Mars_27b	Mars_27b	Mars-27b	Mars-27b	FEM	Helliwell Hills 	Helliwell Hills 	3c	Northen Victoria Land	Sandstone	Sandstone	-71.72968	161.3879	n/a	1028	233	15-16	Antarctica	0	2015
+46	Mars_46	Mars_46	Mars-46	Mars-46	FEM	Inexpressible Island	Inexpressible Island	2	Northen Victoria Land	Sandstone	Sandstone	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+47	Mars_47	Mars_47	Mars-47	Mars-47	FEM	Inexpressible Island	Inexpressible Island	3	Northen Victoria Land	Granite	Granite	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+48	Mars_48	Mars_48	Mars-48	Mars-48	FEM	Inexpressible Island	Inexpressible Island	4	Northen Victoria Land	Granite	Granite	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+49	Mars_49	Mars_49	Mars-49	Mars-49	FEM	Inexpressible Island	Inexpressible Island	5	Northen Victoria Land	Granite	Granite	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+50	Mars_50b	Mars_50b	Mars-50b	Mars-50b	FEM	Inexpressible Island	Inexpressible Island	6	Northen Victoria Land	Granite	Granite	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+51	Mars_51b	Mars_51b	Mars-51b	Mars-51b	FEM	Inexpressible Island	Inexpressible Island	7	Northen Victoria Land	Granite	Granite	-74.88931	163.7455	n/a	0	0	11-Oct	Antarctica 	0	2010
+85	Mars_85b	Mars_85b	Mars-85b	Mars-85b	FEM	Inexpressible Island	Inexpressible Island	989.2	Northen Victoria Land	Granite	Granite	-74.889306	163.7455	n/a	0	0	1998	Antarctica 	0	1998
+43	Mars_43	Mars_43	Mars-43	Mars-43	FEM	Kay Island	Kay Island	1	Northen Victoria Land	Quartz	Quartz	-74.07042	165.31667	n/a	80	0	11-Oct	Antarctica 	0	2010
+44	Mars_44	Mars_44	Mars-44	Mars-44	FEM	Kay Island	Kay Island	2	Northen Victoria Land	Quartz	Quartz	-74.07039	165.31614	n/a	80	0	11-Oct	Antarctica 	0	2010
+45	Mars_45	Mars_45	Mars-45	Mars-45	FEM	Kay Island	Kay Island	3	Northen Victoria Land	Quartz	Quartz	-74.0705	165.316	n/a	80	0	11-Oct	Antarctica 	0	2010
+109	KnobheadnordMG_2	KnobheadnordMG_2	KnobheadnordMG_2	KnobheadnordMG_2	JGI	Knobhead	Knobhead	2	Dry Valleys	Sandstone	Sandstone	-77.91	161.579	North	2150	n/a	15-16	Antarctica	0	2015
+110	KnobheadsudMG_2	KnobheadsudMG_2	KnobheadsudMG_3	KnobheadsudMG_4	JGI	Knobhead	Knobhead	3	Dry Valleys	Sandstone	Sandstone	-77.911	161.577	South	2150	n/a	15-16	Antarctica	0	2015
+114	FICUS_Selbmann_2	FICUS_Selbmann_2_22	FICUS_Selbmann_2_22	FICUS_Selbmann_2_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	2	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+115	FICUS_Selbmann_3	FICUS_Selbmann_3_22	FICUS_Selbmann_3_22	FICUS_Selbmann_3_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	3	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+116	FICUS_Selbmann_4	FICUS_Selbmann_4_13	FICUS_Selbmann_4_13	FICUS_Selbmann_4_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	3b	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+117	FICUS_Selbmann_5	FICUS_Selbmann_5_12	FICUS_Selbmann_5_12	FICUS_Selbmann_5_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	4	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+118	FICUS_Selbmann_6	FICUS_Selbmann_6_12	FICUS_Selbmann_6_12	FICUS_Selbmann_6_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	5	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+168	FICUS_Selbmann_67	FICUS_Selbmann_6_14	FICUS_Selbmann_6_14	FICUS_Selbmann_6_8	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	1	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+169	FICUS_Selbmann_68	FICUS_Selbmann_6_17	FICUS_Selbmann_6_17	FICUS_Selbmann_6	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	2	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+119	FICUS_Selbmann_7	FICUS_Selbmann_7_12	FICUS_Selbmann_7_12	FICUS_Selbmann_7_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	2	Dry Valleys	Sandstone	Sandstone	-77.6	161.083	North	1770	n/a	15-16	Antarctica	0	2015
+178	FICUS_Selbmann_79	FICUS_Selbmann_7_16	FICUS_Selbmann_7_16	FICUS_Selbmann_7_16	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	4	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	n/a	1770	n/a	2004	Antarctica	0	2004
+172	FICUS_Selbmann_72	FICUS_Selbmann_7_18	FICUS_Selbmann_7_18	FICUS_Selbmann_7_6	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	1	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+171	FICUS_Selbmann_71	FICUS_Selbmann_7_19	FICUS_Selbmann_7_19	FICUS_Selbmann_7_5	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	4b	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+173	FICUS_Selbmann_73	FICUS_Selbmann_7_21	FICUS_Selbmann_7_21	FICUS_Selbmann_7_3	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	2	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+170	FICUS_Selbmann_70	FICUS_Selbmann_7_22	FICUS_Selbmann_7_22	FICUS_Selbmann_7_2	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	4	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	North	1770	n/a	18-19	Antarctica	0	2018
+120	FICUS_Selbmann_8	FICUS_Selbmann_8_12	FICUS_Selbmann_8_12	FICUS_Selbmann_8_11	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	4	Dry Valleys	Sandstone	Sandstone	-77.6	161.083	North	1770	n/a	15-16	Antarctica	0	2015
+180	FICUS_Selbmann_82	FICUS_Selbmann_8_19	FICUS_Selbmann_8_19	FICUS_Selbmann_8_5	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	5	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	n/a	1770	n/a	2004	Antarctica	0	2004
+179	FICUS_Selbmann_80	FICUS_Selbmann_8_22	FICUS_Selbmann_8_22	FICUS_Selbmann_8_22	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	2	Dry Valleys	Sandstone	Sandstone	-77.598	161.007	n/a	1770	n/a	2004	Antarctica	0	2004
+121	FICUS_Selbmann_9	FICUS_Selbmann_9_9	FICUS_Selbmann_9_9	FICUS_Selbmann_9_8	JGI-FICUS	Linnaeus Terrace	Linnaeus Terrace	5	Dry Valleys	Sandstone	Sandstone	-77.6	161.083	North	1770	n/a	15-16	Antarctica	0	2015
+104	LinTernordMG_2	LinTernordMG_2	LinTernordMG_2	LinTernordMG_2	JGI	Linnaeus Terrace	Linnaeus Terrace	3	Dry Valleys	Sandstone	Sandstone	-77.6	161.083	North	1649	n/a	15-16	Antarctica	0	2015
+89	Mars_89b	Mars_89b	Mars-89b	Mars-89b	FEM	Machu Picchu station 	Machu Picchu Base 	012-21	Antarctic Peninsula	Granite/Quartz	Quartz	-62.10008	-58.51664	n/a	50	1	2001	Antarctica 	0	2001
+90	Mars_90b	Mars_90b	Mars-90b	Mars-90b	FEM	Machu Picchu station 	Machu Picchu Base 	012-15	Antarctic Peninsula	Quartz/Diorite	Quartz	-62.10008	-58.51664	n/a	40	1	2001	Antarctica 	0	2001
+66	Mars_66	Mars_66	Mars-66	Mars-66	FEM	Mt. Billing	Mt. Billing	1	Northen Victoria Land	Dolerite	Basalt/Dolerite	-75.703333	160.908	n/a	1300	44	11-Oct	Antarctica 	0	2010
+67	Mars_67b	Mars_67b	Mars-67b	Mars-67b	FEM	Mt. Billing	Mt. Billing	2	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+68	Mars_68	Mars_68	Mars-68	Mars-68	FEM	Mt. Billing	Mt. Billing	3	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+69	Mars_69	Mars_69	Mars-69	Mars-69	FEM	Mt. Billing	Mt. Billing	4	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+70	Mars_70	Mars_70	Mars-70	Mars-70	FEM	Mt. Billing	Mt. Billing	7	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+71	Mars_71	Mars_71	Mars-71	Mars-71	FEM	Mt. Billing	Mt. Billing	8	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+72	Mars_72	Mars_72	Mars-72	Mars-72	FEM	Mt. Billing	Mt. Billing	9	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.91389	n/a	1300	44	11-Oct	Antarctica 	0	2010
+86	Mars_86	Mars_86	Mars-86	Mars-86	FEM	Mt. Billing	Mt. Billing	97.46	Northen Victoria Land	Sandstone	Sandstone	-75.70525	160.913889	n/a	1300	44	1996	Antarctica 	0	1996
+91	Mars_91	Mars_91	Mars-91	Mars-91	FEM	Mt. Billing	Mt. Billing	5:5:7:46	Northen Victoria Land	Granite	Granite	-74.889306	163.7455	n/a	1300	44	1996	Antarctica 	0	1996
+1	Mars_1	Mars_1	Mars-1	Mars-1	FEM	Mt. Bowen	Mt. Bowen	1	Northen Victoria Land	Sandstone	Sandstone	-75.75	161.08333	n/a	1874	30.5	11-Oct	Antarctica	0	2010
+31	Mars_31	Mars_31	Mars-31	Mars-31	FEM	Mt. Burrow	Mt. Burrow	1	Northen Victoria Land	Granite	Granite	-73.66667	163.66667	n/a	2000	26.6	11-Oct	Antarctica	0	2010
+60	Mars_60b	Mars_60b	Mars-60b	Mars-60b	FEM	Mt. Burrow	Mt. Burrow	1	Northen Victoria Land	Granite	Granite	-73.66667	163.66667	n/a	2000	26.6	11-Oct	Antarctica 	0	2010
+29	Mars_29	Mars_29	Mars-29	Mars-29	FEM	Mt. Dickason	Mt. Dickason	1	Northen Victoria Land	Granite	Granite	-74.39958	164.00597	n/a	1840	21	11-Oct	Antarctica	0	2010
+30	Mars_30	Mars_30	Mars-30	Mars-30	FEM	Mt. Dickason	Mt. Dickason	4	Northen Victoria Land	Granite	Granite	-74.39958	164.00597	n/a	1840	21	11-Oct	Antarctica	0	2010
+94	Mars_94	Mars_94	Mars-94	Mars-94	FEM	Mt. Dickason	Mt. Dickason	5	Northen Victoria Land	Granite	Granite	-74.399583	164.005972	n/a	1840	21	11-Oct	Antarctica	0	2010
+95	Mars_95	Mars_95	Mars-95	Mars-95	FEM	Mt. Dickason	Mt. Dickason	3	Northen Victoria Land	Granite	Granite	-74.399583	164.005972	n/a	1840	21	11-Oct	Antarctica	0	2010
+135	FICUS_Selbmann_28	FICUS_Selbmann_2_13	FICUS_Selbmann_2_13	FICUS_Selbmann_2_5	JGI-FICUS	Mt. Elektra	Mt. Elektra	2	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+134	FICUS_Selbmann_27	FICUS_Selbmann_2_14	FICUS_Selbmann_2_14	FICUS_Selbmann_2_2	JGI-FICUS	Mt. Elektra	Mt. Elektra	1	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+136	FICUS_Selbmann_29	FICUS_Selbmann_2_15	FICUS_Selbmann_2_15	FICUS_Selbmann_2_6	JGI-FICUS	Mt. Elektra	Mt. Elektra	3	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+130	FICUS_Selbmann_21	FICUS_Selbmann_2_16	FICUS_Selbmann_2_16	FICUS_Selbmann_2_10	JGI-FICUS	Mt. Elektra	Mt. Elektra	1	Dry Valleys	Sandstone	Sandstone	-77.491	160.905	North	1968	n/a	15-16	Antarctica	0	2015
+131	FICUS_Selbmann_23	FICUS_Selbmann_2_17	FICUS_Selbmann_2_17	FICUS_Selbmann_2_8	JGI-FICUS	Mt. Elektra	Mt. Elektra	3	Dry Valleys	Sandstone	Sandstone	-77.491	160.905	North	1968	n/a	15-16	Antarctica	0	2015
+133	FICUS_Selbmann_25	FICUS_Selbmann_2_19	FICUS_Selbmann_2_19	FICUS_Selbmann_2_4	JGI-FICUS	Mt. Elektra	Mt. Elektra	5	Dry Valleys	Sandstone	Sandstone	-77.491	160.905	North	1968	n/a	15-16	Antarctica	0	2015
+132	FICUS_Selbmann_24	FICUS_Selbmann_2_20	FICUS_Selbmann_2_20	FICUS_Selbmann_2_3	JGI-FICUS	Mt. Elektra	Mt. Elektra	4	Dry Valleys	Sandstone	Sandstone	-77.491	160.905	North	1968	n/a	15-16	Antarctica	0	2015
+139	FICUS_Selbmann_32	FICUS_Selbmann_3_16	FICUS_Selbmann_3_16	FICUS_Selbmann_3_10	JGI-FICUS	Mt. Elektra	Mt. Elektra	5	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+138	FICUS_Selbmann_31	FICUS_Selbmann_3_17	FICUS_Selbmann_3_17	FICUS_Selbmann_3_9	JGI-FICUS	Mt. Elektra	Mt. Elektra	4b	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+141	FICUS_Selbmann_34	FICUS_Selbmann_3_18	FICUS_Selbmann_3_18	FICUS_Selbmann_3_8	JGI-FICUS	Mt. Elektra	Mt. Elektra	7	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+140	FICUS_Selbmann_33	FICUS_Selbmann_3_19	FICUS_Selbmann_3_19	FICUS_Selbmann_3_7	JGI-FICUS	Mt. Elektra	Mt. Elektra	6	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+142	FICUS_Selbmann_35	FICUS_Selbmann_3_20	FICUS_Selbmann_3_20	FICUS_Selbmann_3_3	JGI-FICUS	Mt. Elektra	Mt. Elektra	7b	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+137	FICUS_Selbmann_30	FICUS_Selbmann_3_21	FICUS_Selbmann_3_21	FICUS_Selbmann_3_21	JGI-FICUS	Mt. Elektra	Mt. Elektra	4	Dry Valleys	Sandstone	Sandstone	-77.492	160.907	North	1770	n/a	18-19	Antarctica	0	2018
+78	Mars_78	Mars_78	Mars-78	Mars-78	FEM	Mt. Elektra	Mt. Elektra	2	Dry Valleys	Sandstone	Sandstone	-77.491667	160.90672	South	1770	n/a	18-19	Antarctica 	0	2018
+28	Mars_28	Mars_28	Mars-28	Mars-28	FEM	Mt. Keinath	Mt. Keinath	1	Northen Victoria Land	Granite	Granite	-74.5505	164.06547	n/a	385	5.2	11-Oct	Antarctica	0	2010
+52	Mars_52	Mars_52	Mars-52	Mars-52	FEM	Mt. Larsen	Mt. Larsen	1	Northen Victoria Land	Mixed	Granite	-74.88439	162.16611	n/a	935	10	11-Oct	Antarctica 	0	2010
+53	Mars_53	Mars_53	Mars-53	Mars-53	FEM	Mt. Larsen	Mt. Larsen	2	Northen Victoria Land	Granite	Granite	-74.88439	162.16611	n/a	935	10	11-Oct	Antarctica 	0	2010
+35	Mars_35	Mars_35	Mars-35	Mars-35	FEM	Mt. McGee	Mt. McGee	1	Northen Victoria Land	Granite	Granite	-75.666667	161.26667	n/a	1350	18	11-Oct	Antarctica	0	2010
+36	Mars_36	Mars_36	Mars-36	Mars-36	FEM	Mt. McGee	Mt. McGee	3	Northen Victoria Land	Granite	Granite	-75.666667	161.26667	n/a	230	13	11-Oct	Antarctica	0	2010
+54	Mars_54	Mars_54	Mars-54	Mars-54	FEM	Mt. Nansen 	Mt. Nansen 	2	Northen Victoria Land	Granite	Granite	-74.53639	162.56528	n/a	2349	20	11-Oct	Antarctica 	0	2010
+55	Mars_55	Mars_55	Mars-55	Mars-55	FEM	Mt. Nansen 	Mt. Nansen 	3	Northen Victoria Land	Granite	Granite	-74.56778	162.24361	n/a	1200	23.3	11-Oct	Antarctica 	0	2010
+56	Mars_56	Mars_56	Mars-56	Mars-56	FEM	Mt. Nansen 	Mt. Nansen 	4	Northen Victoria Land	Granite	Granite	-74.62861	162.59389	n/a	2240	12.5	11-Oct	Antarctica 	0	2010
+143	FICUS_Selbmann_37	FICUS_Selbmann_3_12	FICUS_Selbmann_3_12	FICUS_Selbmann_3_12	JGI-FICUS	Mt. New Zealand	Mt. New Zealand	5	Northen Victoria Land	Sandstone	Sandstone	-74.179	162.515	North	3100	n/a	15-16	Antarctica	0	2015
+144	FICUS_Selbmann_38	FICUS_Selbmann_3_15	FICUS_Selbmann_3_15	FICUS_Selbmann_3_2	JGI-FICUS	Mt. New Zealand	Mt. New Zealand	6	Northen Victoria Land	Sandstone	Sandstone	-74.179	162.515	North	3100	n/a	15-16	Antarctica	0	2015
+145	FICUS_Selbmann_40	FICUS_Selbmann_4_12	FICUS_Selbmann_4_12	FICUS_Selbmann_4_5	JGI-FICUS	Mt. New Zealand	Mt. New Zealand	8	Northen Victoria Land	Sandstone	Sandstone	-74.179	162.515	North	3100	n/a	15-16	Antarctica	0	2015
+147	FICUS_Selbmann_42	FICUS_Selbmann_4_19	FICUS_Selbmann_4_19	FICUS_Selbmann_4_19	JGI-FICUS	Mt. New Zealand	Mt. New Zealand	10	Northen Victoria Land	Sandstone	Sandstone	-74.179	162.515	North	3100	n/a	15-16	Antarctica	0	2015
+146	FICUS_Selbmann_41	FICUS_Selbmann_4_22	FICUS_Selbmann_4_22	FICUS_Selbmann_4_6	JGI-FICUS	Mt. New Zealand	Mt. New Zealand	9	Northen Victoria Land	Sandstone	Sandstone	-74.179	162.515	North	3100	n/a	15-16	Antarctica	0	2015
+113	MtNewZealnordMG_2	MtNewZealnordMG_2	MtNewZealnordMG_2	MtNewZealnordMG_2	JGI	Mt. New Zealand	Mt. New Zealand	1	Northen Victoria Land	Sandstone	Sandstone	-74.178	162.514	North	3100	47	15-16	Antarctica	0	2015
+160	FICUS_Selbmann_59	FICUS_Selbmann_5_13	FICUS_Selbmann_5_13	FICUS_Selbmann_5_13	JGI-FICUS	Pudding Butte	Pudding Butte	1	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+161	FICUS_Selbmann_60	FICUS_Selbmann_6_13	FICUS_Selbmann_6_13	FICUS_Selbmann_6_5	JGI-FICUS	Pudding Butte	Pudding Butte	2	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+167	FICUS_Selbmann_66	FICUS_Selbmann_6_15	FICUS_Selbmann_6_15	FICUS_Selbmann_6_7	JGI-FICUS	Pudding Butte	Pudding Butte	6	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+166	FICUS_Selbmann_65	FICUS_Selbmann_6_18	FICUS_Selbmann_6_18	FICUS_Selbmann_6_10	JGI-FICUS	Pudding Butte	Pudding Butte	5b	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+165	FICUS_Selbmann_64	FICUS_Selbmann_6_19	FICUS_Selbmann_6_19	FICUS_Selbmann_6_9	JGI-FICUS	Pudding Butte	Pudding Butte	5	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+162	FICUS_Selbmann_61	FICUS_Selbmann_6_20	FICUS_Selbmann_6_20	FICUS_Selbmann_6_6	JGI-FICUS	Pudding Butte	Pudding Butte	2b	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+164	FICUS_Selbmann_63	FICUS_Selbmann_6_21	FICUS_Selbmann_6_21	FICUS_Selbmann_6_4	JGI-FICUS	Pudding Butte	Pudding Butte	3b	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+163	FICUS_Selbmann_62	FICUS_Selbmann_6_22	FICUS_Selbmann_6_22	FICUS_Selbmann_6_22	JGI-FICUS	Pudding Butte	Pudding Butte	3	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.974	North	1690	n/a	15-16	Antarctica	0	2015
+100	PudButnordMG_2	PudButnordMG_2	PudButnordMG_2	PudButnordMG_2	JGI	Pudding Butte	Pudding Butte	4	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.973	North	1573	60	15-16	Antarctica	0	2015
+101	PudButsudMG_2	PudButsudMG_2	PudButsudMG_2	PudButsudMG_2	JGI	Pudding Butte	Pudding Butte	1	Northen Victoria Land	Sandstone	Sandstone	-75.858	159.973	South	1588	60	15-16	Antarctica	0	2015
+75	Mars_75b	Mars_75b	Mars-75b	Mars-75b	FEM	Pudding Butte 	Pudding Butte 	1	Northen Victoria Land	Sandstone	Sandstone	-75.86667	159.98333	North	1600	58.6	11-Oct	Antarctica 	0	2010
+76	Mars_76	Mars_76	Mars-76	Mars-76	FEM	Pudding Butte 	Pudding Butte 	2	Northen Victoria Land	Sandstone	Sandstone	-75.86747	159.98272	North	1600	58.6	11-Oct	Antarctica 	0	2010
+32	Mars_32	Mars_32	Mars-32	Mars-32	FEM	Random Hills	Random Hills	1	Northen Victoria Land	Granite	Granite	-74.01	164.36667	n/a	1700	13	11-Oct	Antarctica	0	2010
+33	Mars_33	Mars_33	Mars-33	Mars-33	FEM	Random Hills	Random Hills	2	Northen Victoria Land	Granite	Granite	-74.01	164.36667	n/a	1700	13	11-Oct	Antarctica	0	2010
+34	Mars_34	Mars_34	Mars-34	Mars-34	FEM	Random Hills	Random Hills	3	Northen Victoria Land	Granite	Granite	-74.01	164.36667	n/a	1700	13	11-Oct	Antarctica	0	2010
+106	RicNunsandstonMG_3	RicNunsandstonMG_3	RicNunsandstonMG_3	RicNunsandstonMG_3	JGI	Richard Nunatak red sandstone	Richard Nunatak	4	Northen Victoria Land	Sandstone	Sandstone	-75.933	159.8	North	1721	70.2	15-16	Antarctica	0	2015
+105	RicNunsandstonMG_4	RicNunsandstonMG_4	RicNunsandstonMG_4	RicNunsandstonMG_4	JGI	Richard Nunatak white sandstone	Richard Nunatak	3	Northen Victoria Land	Sandstone	Sandstone	-75.933	159.797	North	1686	70.2	15-16	Antarctica	0	2015
+5	Mars_5	Mars_5	Mars-5	Mars-5	FEM	Ricker Hills	Ricker Hills	2	Northen Victoria Land	Sandstone	Sandstone	-75.70406	159.22761	North	1540	96	15-16	Antarctica	0	2015
+6	Mars_6	Mars_6	Mars-6	Mars-6	FEM	Ricker Hills	Ricker Hills	3	Northen Victoria Land	Sandstone	Sandstone	-75.70406	159.22761	North	1540	96	15-16	Antarctica	0	2015
+7	Mars_7	Mars_7	Mars-7	Mars-7	FEM	Ricker Hills	Ricker Hills	4	Northen Victoria Land	Sandstone	Sandstone	-75.70406	159.22761	North	1540	96	15-16	Antarctica	0	2015
+8	Mars_8b	Mars_8b	Mars-8b	Mars-8b	FEM	Ricker Hills	Ricker Hills	5	Northen Victoria Land	Sandstone	Sandstone	-75.70406	159.22761	North	1540	96	15-16	Antarctica	0	2015
+9	Mars_9	Mars_9	Mars-9	Mars-9	FEM	Ricker Hills	Ricker Hills	6	Northen Victoria Land	Sandstone	Sandstone	-75.70406	159.22761	North	1540	96	15-16	Antarctica	0	2015
+99	RickerHillsnord_2	RickerHillsnord_2	RickerHillsnord_2	RickerHillsnord_2	JGI	Ricker Hills	Ricker Hills	1	Northen Victoria Land	Sandstone	Sandstone	-75.703	159.233	North	1442	96	15-16	Antarctica	0	2015
+19	Mars_19	Mars_19	Mars-19	Mars-19	FEM	Schultz Peak	Schultz Peak	1	Northen Victoria Land	Sandstone	Sandstone	-76.01558	160.8934	n/a	1400	n/a	18-19	Antarctica	0	2015
+20	Mars_20	Mars_20	Mars-20	Mars-20	FEM	Schultz Peak	Schultz Peak	2	Northen Victoria Land	Sandstone	Sandstone	-76.01558	160.8934	n/a	1400	n/a	18-19	Antarctica	0	2015
+79	Mars_79	Mars_79	Mars-79	Mars-79	FEM	Siegfried Peak	Siegfried Peak	3	Dry Valleys	Sandstone	Sandstone	-77.578694	161.78658	North	1620	n/a	15-16	Antarctica 	0	2015
+80	Mars_80	Mars_80	Mars-80	Mars-80	FEM	Siegfried Peak	Siegfried Peak	5	Dry Valleys	Sandstone	Sandstone	-77.578694	161.78658	North	1620	n/a	15-16	Antarctica 	0	2015
+81	Mars_81	Mars_81	Mars-81	Mars-81	FEM	Siegfried Peak	Siegfried Peak	5	Dry Valleys	Sandstone	Sandstone	-77.57775	161.78817	South	1620	n/a	15-16	Antarctica 	0	2015
+102	SiePeanordMG_2	SiePeanordMG_2	SiePeanordMG_2	SiePeanordMG_2	JGI	Siegfried Peak	Siegfried Peak	2	Dry Valleys	Sandstone	Sandstone	-77.578	161.786	North	1620	n/a	15-16	Antarctica	0	2015
+103	SiePeasudMG_2	SiePeasudMG_2	SiePeasudMG_2	SiePeasudMG_2	JGI	Siegfried Peak	Siegfried Peak	6	Dry Valleys	Sandstone	Sandstone	-77.578	161.786	South	1620	n/a	15-16	Antarctica	0	2015
+38	Mars_38	Mars_38	Mars-38	Mars-38	FEM	Starr Nunatak 	Starr Nunatak 	1(2a)	Northen Victoria Land	Granite	Granite	-75.89853	162.59289	n/a	1420	10	2004	Antarctica 	0	2004
+39	Mars_39	Mars_39	Mars-39	Mars-39	FEM	Starr Nunatak 	Starr Nunatak 	2(2b)	Northen Victoria Land	Granite	Granite	-75.89853	162.59289	n/a	1420	10	2004	Antarctica 	0	2004
+40	Mars_40	Mars_40	Mars-40	Mars-40	FEM	Starr Nunatak 	Starr Nunatak 	3	Northen Victoria Land	Granite	Granite	-75.89853	162.59289	n/a	1420	10	2004	Antarctica 	0	2004
+41	Mars_41	Mars_41	Mars-41	Mars-41	FEM	Starr Nunatak 	Starr Nunatak 	8	Northen Victoria Land	Granite	Granite	-75.89853	162.59289	n/a	1420	10	2004	Antarctica 	0	2004
+42	Mars_42	Mars_42	Mars-42	Mars-42	FEM	Starr Nunatak 	Starr Nunatak 	2c	Northen Victoria Land	Granite	Granite	-75.89853	162.59289	n/a	1420	10	2004	Antarctica 	0	2004
+77	Mars_77	Mars_77	Mars-77	Mars-77	FEM	Timber Peak	Timber Peak	3	Northen Victoria Land	Sandstone	Sandstone	-74.17028	162.42553	n/a	2800	49.5	11-Oct	Antarctica 	1	2010
+22	Mars_22	Mars_22	Mars-22	Mars-22	FEM	Timber Peak 	Timber Peak 	19	Northen Victoria Land	Sandstone	Sandstone	-74.17203	162.42919	n/a	2800	49.5	18-19	Antarctica	1	2018
+92	Mars_92	Mars_92	Mars-92	Mars-92	FEM	Timber Peak 	Timber Peak 	14	Northen Victoria Land	Sandstone	Sandstone	-74.172028	162.429192	n/a	2800	49.5	18-19	Antarctica 	1	2018
+21	Mars_21b	Mars_21b	Mars-21b	Mars-21b	FEM	Timber Peak  	Timber Peak  	15	Northen Victoria Land	Sandstone	Sandstone	-74.17203	162.42919	n/a	2800	49.5	18-19	Antarctica	1	2018
+152	FICUS_Selbmann_49	FICUS_Selbmann_4_14	FICUS_Selbmann_4_14	FICUS_Selbmann_4_2	JGI-FICUS	Trio Nunatak	Trio Nunatak	8	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+151	FICUS_Selbmann_48	FICUS_Selbmann_4_15	FICUS_Selbmann_4_15	FICUS_Selbmann_4	JGI-FICUS	Trio Nunatak	Trio Nunatak	6	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+150	FICUS_Selbmann_47	FICUS_Selbmann_4_16	FICUS_Selbmann_4_16	FICUS_Selbmann_4_4	JGI-FICUS	Trio Nunatak	Trio Nunatak	5	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+149	FICUS_Selbmann_45	FICUS_Selbmann_4_20	FICUS_Selbmann_4_20	FICUS_Selbmann_4_8	JGI-FICUS	Trio Nunatak	Trio Nunatak	3	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+148	FICUS_Selbmann_44	FICUS_Selbmann_4_21	FICUS_Selbmann_4_21	FICUS_Selbmann_4_7	JGI-FICUS	Trio Nunatak	Trio Nunatak	2b	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+154	FICUS_Selbmann_52	FICUS_Selbmann_5_20	FICUS_Selbmann_5_20	FICUS_Selbmann_5_5	JGI-FICUS	Trio Nunatak	Trio Nunatak	12	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+153	FICUS_Selbmann_51	FICUS_Selbmann_5_21	FICUS_Selbmann_5_21	FICUS_Selbmann_5_4	JGI-FICUS	Trio Nunatak	Trio Nunatak	11	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1470	n/a	15-16	Antarctica	0	2015
+98	TrioNunataknord_2	TrioNunataknord_2	TrioNunataknord_2	TrioNunataknord_2	JGI	Trio Nunatak	Trio Nunatak	8	Northen Victoria Land	Sandstone	Sandstone	-75.482	159.591	North	1388	115	15-16	Antarctica	0	2015
+126	FICUS_Selbmann_17	FICUS_Selbmann_1_12	FICUS_Selbmann_1_12	FICUS_Selbmann_1_6	JGI-FICUS	University Valley	University Valley	1	Dry Valleys	Sandstone	Sandstone	-77.875	160.74	North	2200	n/a	15-16	Antarctica	0	2015
+128	FICUS_Selbmann_19	FICUS_Selbmann_1_14	FICUS_Selbmann_1_14	FICUS_Selbmann_1_5	JGI-FICUS	University Valley	University Valley	5	Dry Valleys	Sandstone	Sandstone	-77.875	160.739	North	2200	n/a	15-16	Antarctica	0	2015
+127	FICUS_Selbmann_18	FICUS_Selbmann_1_15	FICUS_Selbmann_1_15	FICUS_Selbmann_1_7	JGI-FICUS	University Valley	University Valley	4	Dry Valleys	Sandstone	Sandstone	-77.875	160.739	North	2200	n/a	15-16	Antarctica	0	2015
+129	FICUS_Selbmann_20	FICUS_Selbmann_2_21	FICUS_Selbmann_2_21	FICUS_Selbmann_2_9	JGI-FICUS	University Valley	University Valley	5	Dry Valleys	Sandstone	Sandstone	-77.873	160.755	South	2200	n/a	15-16	Antarctica	0	2015
+183	FICUS_Selbmann_87	FICUS_Selbmann_8_13	FICUS_Selbmann_8_13	FICUS_Selbmann_8_10	JGI-FICUS	University Valley	University Valley	1.3	Dry Valleys	Sandstone	Sandstone	-77.875	160.739	n/a	2200	n/a	2004	Antarctica	0	2004
+182	FICUS_Selbmann_85	FICUS_Selbmann_8_20	FICUS_Selbmann_8_20	FICUS_Selbmann_8_4	JGI-FICUS	University Valley	University Valley	4a1	Dry Valleys	Sandstone	Sandstone	-77.875	160.739	n/a	2200	n/a	2004	Antarctica	0	2004
+181	FICUS_Selbmann_84	FICUS_Selbmann_8_21	FICUS_Selbmann_8_21	FICUS_Selbmann_8_3	JGI-FICUS	University Valley	University Valley	3	Dry Valleys	Sandstone	Sandstone	-77.875	160.739	n/a	2200	n/a	2004	Antarctica	0	2004
+111	UniValnordMG_2	UniValnordMG_2	UniValnordMG_2	UniValnordMG_2	JGI	University Valley	University Valley	3	Dry Valleys	Sandstone	Sandstone	-77.874	160.739	North	2090	n/a	15-16	Antarctica	0	2015
+112	UniValsudMG_2	UniValsudMG_2	UniValsudMG_2	UniValsudMG_2	JGI	University Valley	University Valley	4	Dry Valleys	Sandstone	Sandstone	-77.872	160.755	South	2200	n/a	15-16	Antarctica	0	2015
+157	FICUS_Selbmann_56	FICUS_Selbmann_5_14	FICUS_Selbmann_5_14	FICUS_Selbmann_5_8	JGI-FICUS	Unnamed Nunatak	Unnamed Nunatak	2b	Northen Victoria Land	Sandstone	Sandstone	-75.662	158.876	North	1650	n/a	15-16	Antarctica	0	2015
+159	FICUS_Selbmann_58	FICUS_Selbmann_5_15	FICUS_Selbmann_5_15	FICUS_Selbmann_5_3	JGI-FICUS	Unnamed Nunatak	Unnamed Nunatak	3b	Northen Victoria Land	Sandstone	Sandstone	-75.662	158.876	North	1650	n/a	15-16	Antarctica	0	2015
+158	FICUS_Selbmann_57	FICUS_Selbmann_5_16	FICUS_Selbmann_5_16	FICUS_Selbmann_5_2	JGI-FICUS	Unnamed Nunatak	Unnamed Nunatak	3	Northen Victoria Land	Sandstone	Sandstone	-75.662	158.876	North	1650	n/a	15-16	Antarctica	0	2015
+156	FICUS_Selbmann_54	FICUS_Selbmann_5_17	FICUS_Selbmann_5_17	FICUS_Selbmann_5_17	JGI-FICUS	Unnamed Nunatak	Unnamed Nunatak	2	Northen Victoria Land	Sandstone	Sandstone	-75.662	158.876	North	1650	n/a	15-17	Antarctica	0	2015
+155	FICUS_Selbmann_53	FICUS_Selbmann_5_18	FICUS_Selbmann_5_18	FICUS_Selbmann_5_9	JGI-FICUS	Unnamed Nunatak	Unnamed Nunatak	1	Northen Victoria Land	Sandstone	Sandstone	-75.662	158.876	North	1650	n/a	15-16	Antarctica	0	2015
+57	Mars_57b	Mars_57b	Mars-57b	Mars-57b	FEM	Vegetation Island 	Vegetation Island 	6	Northen Victoria Land	Granite	Granite	-74.78417	163.65972	n/a	200	0	2004	Antarctica 	0	2004
+58	Mars_58	Mars_58	Mars-58	Mars-58	FEM	Vegetation Island 	Vegetation Island 	7	Northen Victoria Land	Granite	Granite	-74.78417	163.65972	n/a	200	0	2004	Antarctica 	0	2004
+59	Mars_59	Mars_59	Mars-59	Mars-59	FEM	Vegetation Island 	Vegetation Island 	2	Northen Victoria Land	Granite	Granite	-74.78417	163.65972	n/a	200	0	11-Oct	Antarctica 	0	2010
+93	Mars_93	Mars_93	Mars-93	Mars-93	FEM	Vegetation Island 	Vegetation Island 	5	Northen Victoria Land	Granite	Granite	-74.784167	163.659722	n/a	200	0	2004	Antarctica 	0	2004
+61	Mars_61	Mars_61	Mars-61	Mars-61	FEM	Widowmaker Pass	Widowmaker Pass	2	Northen Victoria Land	Granite	Granite	-74.93278	162.40444	n/a	700	1.5	11-Oct	Antarctica 	0	2010
+62	Mars_62	Mars_62	Mars-62	Mars-62	FEM	Widowmaker Pass	Widowmaker Pass	3	Northen Victoria Land	Granite	Granite	-74.93278	162.40444	n/a	700	1.5	11-Oct	Antarctica 	0	2010
+63	Mars_63	Mars_63	Mars-63	Mars-63	FEM	Widowmaker Pass	Widowmaker Pass	4	Northen Victoria Land	Granite	Granite	-74.93278	162.40444	n/a	700	1.5	11-Oct	Antarctica 	0	2010
+64	Mars_64	Mars_64	Mars-64	Mars-64	FEM	Widowmaker Pass	Widowmaker Pass	5	Northen Victoria Land	Granite	Granite	-74.93278	162.40444	n/a	700	1.5	11-Oct	Antarctica 	0	2010

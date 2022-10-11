@@ -1,2 +1,2 @@
 plots/exploratory
-results/process_data/*csv
+results/processed_data/*.csv
