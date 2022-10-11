@@ -1,0 +1,1544 @@
+---
+title: "R Analysis of Antarctic Metagenome Viral Communities"
+author: "Cassie Ettinger"
+output:  github_document
+#output: pdf_document
+---
+
+```{r setup, include=FALSE}
+#Setup RMarkdown doc; not included in knit
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+opts_chunk$set(fig.width = 6, fig.height = 4)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+# Load Libraries
+
+```{r load, message=FALSE, warning=FALSE}
+library(GGally)
+library(tidyverse)
+library(network)
+library(vroom)
+library(phyloseq)
+library(microbiome)
+library(vegan)
+library(pairwiseAdonis)
+library(patchwork)
+library(ggnewscale)
+library(ggforce)
+library(geosphere)
+library(rnaturalearth)
+library(sf)
+library(rnaturalearthdata)
+library(biobroom)
+
+
+```
+
+# vOTU processing
+
+Following some of Christian Santos Medellin's scripts: https://github.com/cmsantosm/SpatioTemporalViromes/blob/master/Processing/Scripts/votu_filtering.Rmd
+
+```{r votus, message=FALSE, warning=FALSE, eval=FALSE}
+
+#run on UCR cluster
+#get file names
+dir <- "data/coverage/" 
+cov.files <- list.files(path = dir, pattern = "*.tsv", full.names = T)
+cov.files
+sampleid <- list.files(path = dir, pattern = "*.tsv", full.names = F) %>% 
+  str_remove("_mapped_coverge.tsv") #whoops! mispelled coverage
+sampleid
+
+#open coverage files
+cov.list <- lapply(cov.files, read.table, sep = "\t", header = F, col.names = c("contig", "start", "end", "coverage"))
+names(cov.list) <- sampleid
+
+
+#Christian's function to get coverage for each vOTUs in each bed file and filter out instances in which coverage is < 0.75
+
+get_coverage <- function(df) {
+  df %>% 
+    mutate(nbase = end - start) %>% 
+    group_by(contig) %>% 
+    mutate(length = sum(nbase)) %>% 
+    mutate(perc_seq = nbase/length) %>% 
+    filter(coverage > 0) %>% 
+    summarise(total_coverage = sum(perc_seq)) %>% 
+    filter(total_coverage >= 0.75)
+}
+
+
+#Apply the function to all coverage files
+
+cov.list.proc <- lapply(cov.list, get_coverage)
+cov.list.proc
+
+
+#Make the list into a data frame
+
+cov.df <- plyr::ldply(cov.list.proc, function(x) x) %>% 
+  rename("SampleID" = ".id")
+
+cov.df 
+
+#saveRDS(cov.df, "results/processed_data/cov.df.RDS")
+
+#Convert it to a matrix
+
+cov.mtx <- cov.df %>% 
+  spread(key = SampleID, value = total_coverage) %>% 
+  as.data.frame() 
+row.names(cov.mtx) <- cov.mtx$contig
+cov.mtx <- cov.mtx[,-1]
+cov.mtx
+
+#Remove NAs
+
+cov.mtx <- !is.na(cov.mtx)
+
+#saveRDS(cov.mtx, "results/processed_data/cov.mtx.RDS")
+
+cov.mtx <- readRDS("results/processed_data/cov.mtx.RDS")
+
+#Get the tpmean table generated from BAMM and keep only those instances where coverage >= 0.75
+#we had a few samples missing that we added back in later, hence the need to join files here
+tpmean1 <- vroom("data/relative_abundance/output_file_tpmean_072622.tsv")
+tpmean2 <- vroom("data/relative_abundance/output_file_tpmean_missing_080422.tsv")
+
+tpmean <- full_join(tpmean1, tpmean2)
+
+tpmean
+rownames(tpmean) <- tpmean$`#contig`
+tmp <- colnames(tpmean)
+tmp  <-  str_remove(tmp, "_sortedIndexed.bam")
+tmp <- str_remove(tmp, "data/fastq/bbmap/")
+colnames(tpmean) <- tmp
+tpmean.75 <- tpmean[match(row.names(cov.mtx), row.names(tpmean)), match(colnames(cov.mtx), colnames(tpmean))]
+tpmean.75 <- cov.mtx * tpmean.75
+rownames(tpmean.75) <- row.names(cov.mtx)
+tpmean.75.tidy <- tpmean.75 %>% 
+  as.data.frame() %>% 
+  mutate(OTU_ID = row.names(.)) %>% 
+  gather(key = "SampleID", value = "Abundance", -OTU_ID) %>% 
+  select(SampleID, everything())
+
+
+#Save formatted tables 
+
+# saveRDS(tpmean.75, "results/processed_data/antvir_tpm_75_mtx.RDS")
+# saveRDS(tpmean.75.tidy, "results/processed_data/antvir_tpm_75_tidy.RDS")
+
+
+```
+
+
+# VContact2 processing 
+
+```{r vcontact2, message=FALSE, warning=FALSE}
+
+#this script will take in the vcontact2 results and connect them back to our samples/summarize them
+
+#load in data
+otu.tidy <- readRDS("results/processed_data/antvir_tpm_75_tidy.RDS") #relative abundance data
+genome.ov <- read.table("data/vcontact2/genome_by_genome_overview_ictv.csv", header = T, sep = ",") #results from vcontact2
+ntwk <- read.table("data/vcontact2/c1_ictv.ntw", header = F, sep = " ", col.names = c("OTU1", "OTU2", "Score")) #network from vcontact2
+samples <- read.csv("data/samples.csv") #file with sample names
+ictv_names <- vroom("data/vcontact2/INPHARED_1Aug2022_data.tsv")
+
+#define the source of each vOTU, either Antarctica (AV) or from the reference database INPHARED (refseq)
+genome.ov <- genome.ov %>% 
+  mutate(Source = ifelse(str_detect(Genome, paste(samples$SAMPLE, collapse = "|")), "AV", "refseq"))
+
+genome.ov <- left_join(genome.ov, ictv_names, by=c("Genome"="Accession"))
+
+genome.ov <- genome.ov %>%
+  mutate(Order = ifelse(is.na(Order.y), Order.x, Order.y)) %>%
+  mutate(Family = ifelse(is.na(Family.y), Family.x, Family.y)) %>%
+  mutate(Genus = ifelse(is.na(Genus.y), Genus.x, Genus.y))
+
+
+#check that # contigs matches number expected vOTUs (76986)
+# genome.ov %>% 
+#   filter(Source == "AV") %>% 
+#   group_by(Genome) %>% 
+#   count()
+
+#Generate a data frame that specifies the composition 
+#of each viral cluster in terms of source of network 
+#nodes (ie. does the cluster have sequences from Antarctica?)
+#ClstrComp = cluster composition, either from Antartica (AV), reference data(INPHARED/refseq) or both 
+clstr.source <- genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  mutate(AV = str_detect(Genome,  paste(samples$SAMPLE, collapse = "|"))) %>% 
+  group_by(VC, Size) %>% 
+  summarise(pAV = sum(AV)/n()) %>% 
+  mutate(ClstrComp = case_when(pAV == 0 ~ "refseq",
+                               pAV == 1 ~ "AV",
+                               TRUE ~ "both" )) 
+
+#Let's create a data frame with the consensus viral taxonomy for each cluster. 
+#the strategy is to check each taxonomic rank and see if there's only one assignment or a mix. 
+#Some refseq entrees have unassigned ranks so we are ignoring those 
+#and deciding the proper classification based on the rest of the VC members 
+clstr.phyla <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(Phylum != "Unassigned") %>% 
+  group_by(VC, Phylum) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(Phylum = ifelse(Duplicates > 1, "Mixed", as.character(Phylum))) %>% 
+  group_by(VC, Phylum) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.class <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(Class != "Unassigned") %>% 
+  group_by(VC, Class) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(Class = ifelse(Duplicates > 1, "Mixed", as.character(Class))) %>% 
+  group_by(VC, Class) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.order <- genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(Order != "Unassigned") %>% 
+  group_by(VC, Order) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(Order = ifelse(Duplicates > 1, "Mixed", as.character(Order))) %>% 
+  group_by(VC, Order) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.family <- genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(Family != "Unassigned") %>% 
+  group_by(VC, Family) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(Family = ifelse(Duplicates > 1, "Mixed", as.character(Family))) %>% 
+  group_by(VC, Family) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.genus <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(Genus != "Unassigned") %>% 
+  group_by(VC, Genus) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(Genus = ifelse(Duplicates > 1, "Mixed", as.character(Genus))) %>% 
+  group_by(VC, Genus) %>% 
+  count() %>% 
+  select(-n)
+
+
+
+#combine
+clstr.master <- clstr.source %>% 
+  left_join(clstr.phyla, by = "VC") %>% 
+  left_join(clstr.class, by = "VC") %>% 
+  left_join(clstr.order, by = "VC") %>% 
+  left_join(clstr.family, by = "VC") %>% 
+  left_join(clstr.genus, by = "VC") %>% 
+  mutate(Phylum = ifelse(is.na(Phylum), "Unassigned", Phylum)) %>%
+  mutate(Class = ifelse(is.na(Class), "Unassigned", Class)) %>%
+  mutate(Order = ifelse(is.na(Order), "Unassigned", Order)) %>% 
+  mutate(Family = ifelse(is.na(Family), "Unassigned", Family)) %>% 
+  mutate(Genus = ifelse(is.na(Genus), "Unassigned", Genus)) 
+
+
+#make a taxonomy table for phyloseq
+genome.AV <- genome.ov[which(genome.ov$Source=='AV'),]
+
+genome.AV <- genome.AV[-c(1,3:5,19:59)]
+
+#join the taxomy back to the main cluster dataset
+genome.AV.tax <- left_join(genome.AV, clstr.master, by="VC")
+
+#edit taxonomy a bit more for use in plots
+genome.AV.tax <- genome.AV.tax %>%
+  mutate(ClusterStatus = ifelse(is.na(Size.x), "Unclustered", "Clustered"))%>%
+  mutate(VCStatus = ifelse(VC == "", "Unclustered", VC)) %>%
+  mutate(Phylum = ifelse(is.na(Phylum), "Unassigned", Phylum)) %>% 
+  mutate(Class = ifelse(is.na(Class), "Unassigned", Class)) %>% 
+  mutate(Order = ifelse(is.na(Order), "Unassigned", Order)) %>% 
+  mutate(Family = ifelse(is.na(Family), "Unassigned", Family)) %>% 
+  mutate(Genus = ifelse(is.na(Genus), "Unassigned", Genus))
+
+genome.AV.justtax <- genome.AV.tax[-c(2:17)]
+
+#vcontact2 also makes a network of protein similarity
+#it uses this to make VCs
+#we can use this to plot viruses and color by taxonomy
+#or host
+#or genome quality
+#first we need to import network info into R and save as R-readable files
+#get network information - too big these steps done on cluster
+
+# nodes <- ggnet2(ntwk[,-3], mode = "fruchtermanreingold", layout.par = list(list=(niter=2000)))$data %>%
+#   rename("Genome" = "label")
+# 
+# edges <- ntwk %>%
+#   mutate(Pair = paste(OTU1, OTU2, sep = ".")) %>%
+#   gather(key = "Member", value = "Genome", -Pair, -Score) %>%
+#   inner_join(nodes, by = "Genome")
+# 
+# #save files for later
+# saveRDS(nodes, "results/processed_data/ntwk_nodes_ictv.RDS")
+# saveRDS(edges, "results/processed_data/ntwk_edges_ictv.RDS")
+
+nodes <- readRDS("results/processed_data/ntwk_nodes_ictv.RDS")
+edges <- readRDS("results/processed_data/ntwk_edges_ictv.RDS")
+
+
+#save all the files we made above
+saveRDS(genome.ov, "results/processed_data/genome_vc_master_ictv.RDS")
+write_csv(genome.ov, "results/processed_data/genome_vc_master_ictv.csv")
+
+saveRDS(clstr.master, "results/processed_data/cluster_vc_master_ictv.RDS")
+write_csv(clstr.master, "results/processed_data/cluster_vc_master_ictv.csv")
+
+saveRDS(genome.AV.justtax, "results/processed_data/tax_vc_phyloseq_ictv.RDS")
+write_csv(genome.AV.justtax, "results/processed_data/tax_vc_phyloseq_ictv.csv")
+
+
+## ICTV name conversions
+clstr.phyla.ictv <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(ICTV_Phylum != "Unassigned") %>% 
+  group_by(VC, ICTV_Phylum) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(ICTV_Phylum = ifelse(Duplicates > 1, "Mixed", as.character(ICTV_Phylum))) %>% 
+  group_by(VC, ICTV_Phylum) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.class.ictv <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(ICTV_Class != "Unassigned") %>% 
+  group_by(VC, ICTV_Class) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(ICTV_Class = ifelse(Duplicates > 1, "Mixed", as.character(ICTV_Class))) %>% 
+  group_by(VC, ICTV_Class) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.order.ictv <- genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(ICTV_Order != "Unassigned") %>% 
+  group_by(VC, ICTV_Order) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(ICTV_Order = ifelse(Duplicates > 1, "Mixed", as.character(ICTV_Order))) %>% 
+  group_by(VC, ICTV_Order) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.family.ictv <- genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(ICTV_Family != "Unassigned") %>% 
+  group_by(VC, ICTV_Family) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(ICTV_Family = ifelse(Duplicates > 1, "Mixed", as.character(ICTV_Family))) %>% 
+  group_by(VC, ICTV_Family) %>% 
+  count() %>% 
+  select(-n)
+
+clstr.genus.ictv <-  genome.ov %>% 
+  filter(VC.Status == "Clustered") %>% 
+  filter(VC != "nan") %>% 
+  filter(ICTV_Genus != "Unassigned") %>% 
+  group_by(VC, ICTV_Genus) %>% 
+  count() %>% 
+  group_by(VC) %>% 
+  mutate(Duplicates = n()) %>% 
+  mutate(ICTV_Genus = ifelse(Duplicates > 1, "Mixed", as.character(ICTV_Genus))) %>% 
+  group_by(VC, ICTV_Genus) %>% 
+  count() %>% 
+  select(-n)
+
+
+#combine
+clstr.master.ictv <- clstr.source %>% 
+  left_join(clstr.phyla.ictv, by = "VC") %>% 
+  left_join(clstr.class.ictv, by = "VC") %>% 
+  left_join(clstr.order.ictv, by = "VC") %>% 
+  left_join(clstr.family.ictv, by = "VC") %>% 
+  left_join(clstr.genus.ictv, by = "VC") %>% 
+  mutate(ICTV_Phylum = ifelse(is.na(ICTV_Phylum), "Unassigned", ICTV_Phylum)) %>%
+  mutate(ICTV_Class = ifelse(is.na(ICTV_Class), "Unassigned", ICTV_Class)) %>%
+  mutate(ICTV_Order = ifelse(is.na(ICTV_Order), "Unassigned", ICTV_Order)) %>% 
+  mutate(ICTV_Family = ifelse(is.na(ICTV_Family), "Unassigned", ICTV_Family)) %>% 
+  mutate(ICTV_Genus = ifelse(is.na(ICTV_Genus), "Unassigned", ICTV_Genus))
+
+#make a taxonomy table for phyloseq
+genome.AV <- genome.ov[which(genome.ov$Source=='AV'),]
+
+genome.AV <- genome.AV[-c(1,3,4,5,19:59)]
+
+genome.AV.tax.ictv <- left_join(genome.AV, clstr.master.ictv, by="VC")
+
+genome.AV.tax.ictv <- genome.AV.tax.ictv %>%
+  mutate(ClusterStatus = ifelse(is.na(Size.x), "Unclustered", "Clustered"))%>%
+  mutate(VCStatus = ifelse(VC == "", "Unclustered", VC)) %>%
+  mutate(ICTV_Phylum = ifelse(is.na(ICTV_Phylum), "Unassigned", ICTV_Phylum)) %>% 
+  mutate(ICTV_Class = ifelse(is.na(ICTV_Class), "Unassigned", ICTV_Class)) %>% 
+  mutate(ICTV_Order = ifelse(is.na(ICTV_Order), "Unassigned", ICTV_Order)) %>% 
+  mutate(ICTV_Family = ifelse(is.na(ICTV_Family), "Unassigned", ICTV_Family)) %>% 
+  mutate(ICTV_Genus = ifelse(is.na(ICTV_Genus), "Unassigned", ICTV_Genus))
+
+genome.AV.justtax.ictv <- genome.AV.tax.ictv[-c(2:17)]
+
+saveRDS(genome.AV.justtax.ictv, "results/processed_data/tax_vc_phyloseq_ictv_conversion.RDS")
+
+
+```
+
+
+# Importing vOTU RA into phyloseq and re-naming vOTUS
+
+```{r phyloseq, warning=FALSE, message=FALSE}
+#load data
+tpmean.75 <- readRDS("results/processed_data/antvir_tpm_75_mtx.RDS")
+meta <- vroom("data/metadata_all_samples.tsv")
+tax <- readRDS("results/processed_data/tax_vc_phyloseq_ictv.RDS") 
+
+rownames(meta) <- meta$Sample_name
+
+rownames(tpmean.75) <- word(rownames(tpmean.75))
+tpmean.75 <- tpmean.75 %>% arrange(rownames(tpmean.75))
+
+#remove taxa that don't meet the coverage thresholds
+`%!in%` <- Negate(`%in%`)
+no.cov.tax <- tax[which(tax$Genome %!in% rownames(tpmean.75)),]
+summary(as.factor(no.cov.tax$ClusterStatus))
+# Clustered Unclustered 
+# 2977        1094 
+length(unique(no.cov.tax$Genome))
+#4071
+
+tax <- tax[which(tax$Genome %in% rownames(tpmean.75)),]
+tax <- tax %>% arrange(Genome)
+
+rownames(tax) <- tax$Genome
+
+tax <- as.matrix(tax[-c(1)])
+
+#import into phyloseq
+otu_tab = otu_table(tpmean.75, taxa_are_rows = TRUE)
+mapping_file = sample_data(meta)
+tax_file = tax_table(tax)
+
+rownames(mapping_file) <- meta$Sample_name3
+
+#rename vOTUs and save conversions
+vOTU.names <- as.data.frame(rownames(otu_tab))
+vOTU.names$votu.id <- paste0("vOTU", 1:nrow(vOTU.names))
+
+#write.csv(vOTU.names, "results/processed_data/vOTU.names.csv")
+
+rownames(otu_tab) <- paste0("vOTU", 1:nrow(otu_tab))
+rownames(tax_file) <- paste0("vOTU", 1:nrow(tax_file))
+
+```
+
+# CheckV and CD-HIT processing
+
+```{r checkv, message=FALSE, warning=FALSE}
+
+### CheckV
+
+#Connect CheckV results for each viral sequence back to vOTUs and to VCs 
+#(clustered levels based on similarity)
+
+#combine individual CheckV files and connect to 'Genome' name used in VContact2 results
+CV_data_path <- "data/checkv_results/"   # path to the data
+CV_files <- dir(CV_data_path, pattern = "*.tsv") # get file names
+
+
+CV_data <- data_frame(filename = CV_files) %>%
+   mutate(file_contents = map(filename,  
+                             ~ read_tsv(file.path(CV_data_path, .))))
+
+#CV_data
+
+CV_data_un <- unnest(CV_data, cols = c(file_contents)) #turns list of files into one file
+
+#Need to fix names so can combine with other results later
+CV_data_un <- CV_data_un %>% 
+  mutate_at("filename", str_replace, ".checkv.quality_summary.tsv", "") 
+
+CheckV_results <- CV_data_un %>%
+  mutate(Genome = paste0(filename, ".", contig_id))
+
+saveRDS(CheckV_results, "results/processed_data/checkv_results.RDS")
+write_csv(CheckV_results, "results/processed_data/checkv_results.csv")
+
+### CD-HIT
+
+#Get cluster membership information from cd-hit, to connect to vOTUs
+cdhit <- read_tsv("data/cdhit/cdhit_cluster_info.txt")
+
+checkv_4_cdhit <- CheckV_results %>%
+  mutate(Genome = ifelse(Genome %in% cdhit$id,Genome, paste0(Genome, "_1")))
+
+checkv_cdhit <- left_join(checkv_4_cdhit, cdhit, by = c("Genome" ="id"))
+
+saveRDS(checkv_cdhit, "results/processed_data/checkv_cdhit_results.RDS")
+write_csv(checkv_cdhit, "results/processed_data/checkv_cdhit_results.csv")
+
+#subset to get rep seqs for each cluster, 
+#combine with taxonomy VC 
+#and then remove genome ID and extra info
+#then combine back based on clstr # to get taxonomy for each vOTU 
+
+checkv_cdhit_rep <- checkv_cdhit %>% 
+  filter(clstr_rep == 1)
+
+checkv_cdhit_rep_tax <- left_join(checkv_cdhit_rep, genome.AV.justtax)
+checkv_cdhit_rep_tax <- left_join(checkv_cdhit_rep_tax, genome.AV.justtax.ictv)
+
+#we need to add in vOTU IDs for those vOTUs that had insufficient coverage/counts for inclusion earlier
+#note the naming here is semi-manual as need to know how many vOTUs prior (that is where 72915 came from)
+#could change to length of something here instead in future
+
+#vOTU.names
+
+no.cov.vOTU.names <- tibble(no.cov.tax)
+no.cov.vOTU.names$`rownames(otu_tab)` <- no.cov.tax$Genome
+no.cov.vOTU.names$votu.id <- paste0("vOTU", 72915 + 1:nrow(no.cov.vOTU.names))
+no.cov.vOTU.names <- no.cov.vOTU.names[(9:10)]
+
+vOTUs.ids.for.join <- full_join(vOTU.names, no.cov.vOTU.names)
+
+checkv_cdhit_rep_tax_votu <- left_join(checkv_cdhit_rep_tax, vOTUs.ids.for.join, by=c("Genome" = "rownames(otu_tab)"))
+
+checkv_cdhit_rep_tax_cltr <- checkv_cdhit_rep_tax_votu[-c(1:16,18:22)]
+
+checkv_cdhit_tax <- left_join(checkv_cdhit, checkv_cdhit_rep_tax_cltr)
+
+saveRDS(checkv_cdhit_tax, "results/processed_data/checkv_cdhit_results_with_tax_ictv.RDS")
+write_csv(checkv_cdhit_tax, "results/processed_data/checkv_cdhit_results_with_tax_ictv.csv")
+
+
+```
+
+# DRAM-v Processing 
+```{r dramv, warning=FALSE, message=FALSE}
+##note DRAM files have different viral contig names and need a little love to connect back to checkv/vcontact2 results
+
+### DRAM-v vMAG stats
+
+#Combine dram distill quality info 
+DD_data_path <- "data/dramv_results/"   # path to the data
+DMAG_files <- dir(DD_data_path, pattern = "*.vMAG_stats.tsv") # get file names
+
+
+DMAG_data <- data_frame(filename = DMAG_files) %>%
+  mutate(file_contents = map(filename,
+                             ~ read_tsv(file.path(DD_data_path, .))))
+
+DMAG_data_un <- unnest(DMAG_data, cols = c(file_contents))
+
+DMAG_data_un <- DMAG_data_un %>% 
+  mutate_at("filename", str_replace, "_dramv-distill.vMAG_stats.tsv", "")
+
+#fix viral genome names
+DMAG_data_un <- DMAG_data_un %>% 
+  mutate_at("...1", str_replace, "-cat_1", "") %>%
+  mutate_at("...1", str_replace, "-cat_2", "") %>%
+  mutate_at("...1", str_replace, "-cat_3", "") %>%
+  mutate_at("...1", str_replace, "__", "||") %>%
+  mutate(Genome = paste0(filename, ".", ...1))
+
+saveRDS(DMAG_data_un[-c(2)], "results/processed_data/dram_vmag_stats.RDS")
+write_csv(DMAG_data_un[-c(2)], "results/processed_data/dram_vmag_stats.csv")
+
+dram_vmag_stats <- left_join(checkv_cdhit_tax, DMAG_data_un[-c(1:2)])
+
+saveRDS(dram_vmag_stats, "results/processed_data/checkv_dram_vmag_stats_with_tax_ictv.RDS")
+write_csv(dram_vmag_stats, "results/processed_data/checkv_dram_vmag_stats_with_tax_ictv.csv")
+
+
+### DRAM-v AMG predictions
+
+#combine DRAM-v AMG gene predictions
+
+DD_data_path <- "data/dramv_results/"   # path to the data
+DAMG_files <- dir(DD_data_path, pattern = "*.amg_summary.tsv") # get file names
+
+DAMG_data <- data_frame(filename = DAMG_files) %>%
+  mutate(file_contents = map(filename,         
+                             ~ read_tsv(file.path(DD_data_path, .)) %>% mutate(auxiliary_score = as.character(auxiliary_score)))) 
+
+
+DAMG_data_un <- unnest(DAMG_data, cols = c(file_contents))
+
+DAMG_data_un <- DAMG_data_un %>% 
+  mutate_at("filename", str_replace, "_dramv-distill.amg_summary.tsv", "")
+
+#fixing viral genome names
+DAMG_data_un <- DAMG_data_un %>% 
+  mutate_at("scaffold", str_replace, "-cat_1", "") %>%
+  mutate_at("scaffold", str_replace, "-cat_2", "") %>%
+  mutate_at("scaffold", str_replace, "-cat_3", "") %>%
+  mutate_at("scaffold", str_replace, "__", "||") %>%
+  mutate(Genome = paste0(filename, ".", scaffold))
+
+saveRDS(DAMG_data_un, "results/processed_data/dram_amg_results.RDS")
+write_csv(DAMG_data_un, "results/processed_data/dram_amg_results.csv")
+
+
+```
+
+# VirSorter2 predicted viral categories
+
+```{r VIRSORT, message=FALSE, warning=FALSE}
+
+### VirSorter boundaries
+
+#the authors say these scores aren't definitive, but still can provide us with some estimates of types of viruses we may have (though we expect mostly dsDNA phage)
+
+VS_data_path <- "data/virsorter_results/"   # path to the data
+VS_files <- dir(VS_data_path, pattern = "*.final-viral-score.tsv") # get file names
+
+
+VS_data <- data_frame(filename = VS_files) %>%
+  mutate(file_contents = map(filename,          
+                             ~ read_tsv(file.path(VS_data_path, .))))
+
+
+VS_data_un <- unnest(VS_data, cols = c(file_contents))
+
+VS_data_un <- VS_data_un %>% 
+  mutate_at("filename", str_replace, ".final-viral-score.tsv", "")
+
+VS_data_un <- VS_data_un %>% 
+  mutate(Genome = paste0(filename, ".", seqname))
+
+saveRDS(VS_data_un, "results/processed_data/virsorter_score_results.RDS")
+write_csv(VS_data_un, "results/processed_data/virsorter_score_results.csv")
+
+
+```
+
+
+# Host Prediction
+```{r host, message=FALSE, warning=FALSE}
+
+#load in host prediction from blast
+host <- vroom("data/ncbi_host_prediction/bactarch.antvirus.blastn.tsv", col_names = c("qseqid", "sseqid", "pident", "bitscore" ,"evalue", "length", "sgi", "sacc", "sallseqid", "staxids", "sscinames", "stitle"))
+
+#there are some length / coverage and score requirements for a host prediction to be made
+#setting requirements
+#length of alignment 
+minlen=2000
+minpercid=70
+minbit=50
+mine=0.001 #we set evalue at 1e-25 so not an issue here, they all should be lower than this
+
+#now filter host pred results by the above reqs
+host.filt <- host[which(host$bitscore >= minbit),]
+host.filt <- host.filt[which(host.filt$length >= minlen),]
+host.filt <- host.filt[which(host.filt$pident >= minpercid),]
+
+#take the dataframe & group it by the grouping variable (query genome)
+#and take the top five hits
+host.filt.top5 <- host.filt %>%
+  group_by(qseqid) %>% 
+  slice(1:5)
+
+#run on command line (not in R)
+#cut -f 2 bactarch.antvirus.blastn.tsv | sort | uniq > acc.txt
+
+#cat acc.txt | epost -db nuccore | esummary -db nuccore | xtract -pattern DocumentSummary -element Caption,TaxId > taxa.txt
+
+#conda activate ete3
+#cut -f2 taxa.txt | ete3 ncbiquery --info > taxonomy.txt
+
+#load in taxonomy string (taxonomy.txt) and the link back to accession # (taxa.txt)
+tax2name <- vroom("data/ncbi_host_prediction/taxonomy.txt")
+acc2tax <- vroom("data/ncbi_host_prediction/taxa.txt", col_names=FALSE)
+
+#note this is imperfect at 'species' level, seems OK at some higher levels, BLAST should also be accurate to genus level anyway so should not be an issue for most host predictions
+
+#fix names of different levels
+tax2name <- tax2name %>% 
+  mutate_at("Named Lineage", str_replace, "Bacteroidetes/Chlorobi group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Terrabacteria group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "delta/epsilon subdivisions,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Cystobacterineae,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Sorangiineae,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Roseiflexineae,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Nannocystineae,", "") %>%
+  mutate_at("Named Lineage", str_replace, "PVC group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "FCB group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Cyanobacteria/Melainabacteria group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Klebsiella/Raoultella group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Chromobacterium group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Erythrobacter/Porphyrobacter group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Massilia group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Sinorhizobium/Ensifer group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Brucella/Ochrobactrum group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Rhizobium/Agrobacterium group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Azotobacter group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Alteromonas/Salinimonas group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Chryseobacterium group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "TACK group,","") %>%
+  mutate_at("Named Lineage", str_replace, "Chlamydia/Chlamydophila group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Rhizobium/Agrobacterium group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Sinorhizobium/Ensifer group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Brucella/Ochrobactrum group,", "") %>%
+  mutate_at("Named Lineage", str_replace, "Klebsiella/Raoultella group,", "") 
+
+#note this is imperfect at 'species' level and may still be a bit dirty
+tax2name.split <- tax2name %>%
+  separate("Named Lineage", into = c("root","domain", "superkingdom", "phylum", "class", "order", "family", "genus", "species"), sep=",")
+
+#join back to accession information
+tax_acc <- left_join(acc2tax, tax2name.split, by=c("X2" = "# Taxid"))
+
+host.filt.top5 <- host.filt.top5 %>%
+  mutate_at("sacc", str_replace, "\\d$", "") %>%
+  mutate_at("sacc", str_replace, "\\.", "")
+
+host.filt.top5.taxa <- left_join(host.filt.top5, tax_acc, by=c("sacc" = "X1"))
+
+#collect how many different taxonomic groups in the top 5 hits per each viral genome
+host.filt.top5.taxa.info <- host.filt.top5.taxa %>%
+  summarise(Pd = n_distinct(phylum), 
+            Cd = n_distinct(class),
+            Od = n_distinct(order),
+            Fd = n_distinct(family),
+            Gd = n_distinct(genus),
+            Sd = n_distinct(species))
+
+#make a new df
+virus.names <- unique(host.filt.top5.taxa.info$qseqid)
+host.gen <- as.data.frame(virus.names)
+rm(virus.names)
+
+# take the dataframe & group it by the grouping variable (genome)
+# take only the top hit now
+host.filt.taxa.top1 <- host.filt.top5.taxa %>%
+  group_by(qseqid) %>%
+  slice(1)
+
+#if only one taxonomic classification at each level in host.filt.top5.taxa.info,
+#then we take the phylum of the top hit from host.filt.taxa.top1, otherwise we assign it as "Mixed"
+#meaning that multiple taxonomic groupings were matches at that level for that genome
+# host.gen.tax <- host.gen %>%
+#   mutate(Phylum = ifelse(host.filt.top5.taxa.info[host.filt.top5.taxa.info$qseqid == virus.names,]$Pd == 1, host.filt.taxa.top1[host.filt.taxa.top1$qseqid == virus.names,]$phylum, "Mixed")) %>%
+#   mutate(Class = ifelse(host.filt.top5.taxa.info[host.filt.top5.taxa.info$qseqid == virus.names,]$Cd == 1, host.filt.taxa.top1[host.filt.taxa.top1$qseqid == virus.names,]$class, "Mixed")) %>%
+#   mutate(Order = ifelse(host.filt.top5.taxa.info[host.filt.top5.taxa.info$qseqid == virus.names,]$Od == 1, host.filt.taxa.top1[host.filt.taxa.top1$qseqid == virus.names,]$order, "Mixed")) %>%
+#   mutate(Family = ifelse(host.filt.top5.taxa.info[host.filt.top5.taxa.info$qseqid == virus.names,]$Fd == 1, host.filt.taxa.top1[host.filt.taxa.top1$qseqid == virus.names,]$family, "Mixed")) %>%
+#   mutate(Genus = ifelse(host.filt.top5.taxa.info[host.filt.top5.taxa.info$qseqid == virus.names,]$Gd == 1, host.filt.taxa.top1[host.filt.taxa.top1$qseqid == virus.names,]$genus, "Mixed")) 
+
+#save 
+#write_csv(host.gen.tax, "results/processed_data/viral.host.taxonomy.csv")
+#saveRDS(host.gen.tax, "results/processed_data/host.gen.tax.RDS")
+
+host.gen.tax <- readRDS("results/processed_data/host.gen.tax.RDS")
+
+
+```
+
+
+# Networks
+
+
+```{r networks}
+#load in files using vroom
+sampledata <- vroom("data/metadata_all_samples.tsv")
+checkv_cdhit_tax <- vroom("results/processed_data/checkv_cdhit_results_with_tax_ictv.csv")
+rep.gene.info <- vroom("results/processed_data/dram_vmag_stats.csv")
+
+#we need a column with values that are shared between both files
+#but! we don't have one yet - as filename has SampleID.contigs 
+#we need to remove the ".contigs" from each value in the filename
+#column in order for it to match SampleID in sampledata 
+checkv_cdhit_tax2 <- checkv_cdhit_tax %>% 
+  mutate_at("filename", str_replace, ".contigs", "")
+
+#Mars samples are "_" not "-"
+sampledata2 <- sampledata %>% 
+  mutate_at("SampleID", str_replace, "Mars_", "Mars-")
+
+#join all columns in both files using SampleID = filename which should now both have the same values
+#we will use this for some of our cluster filtering below and later to plot
+combo <- full_join(sampledata2, checkv_cdhit_tax2, by = c("SampleID" = "filename"))
+
+#these take a while to load the images
+
+clstrd.nodes <- nodes %>% 
+  left_join(genome.ov, by = "Genome") %>% 
+  filter(VC.Status == "Clustered") 
+
+#plot by family
+genome.ov.AV <- left_join(genome.ov, checkv_cdhit_tax)
+
+#plot by fam - only VCs that clustered with reference data
+vir.fam.clust <- genome.ov %>% 
+  filter(Source == "AV") %>% 
+  select(Genome, VC, VC.Status) %>% 
+  inner_join(clstr.master, by = "VC") %>% 
+  filter(ClstrComp == "both") %>% 
+  filter(Order != "Unassigned") %>% 
+  left_join(select(combo, VCStatus, checkv_quality, contig_length), by = c("VC"="VCStatus")) %>% 
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  group_by(Order, Family) %>% 
+  count() %>% 
+  group_by(Order) %>% 
+  mutate(nOrd = sum(n)) %>% 
+  arrange(nOrd, n) %>% 
+  ungroup() %>% 
+  mutate(Rank = 1:n())  
+
+vir.fam.nodes <- clstrd.nodes %>% 
+  left_join(select(clstr.master, VC, ClstrComp), by = "VC") %>% 
+  left_join(combo) %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  mutate(Family2 = case_when(Source == "AV" ~ "This Study",
+                             Family %in% vir.fam.clust$Family ~ as.character(Family),
+                             TRUE ~ "Other")) %>% 
+  left_join(vir.fam.clust, by = c("Family2" = "Family")) %>% 
+  filter(Source == "refseq" | ClstrComp == "both")
+ 
+  
+
+# Plot
+ntwk.vir <-  vir.fam.nodes %>% 
+  ggplot(aes(x, y)) +
+  geom_line(data = filter(edges, Genome %in% vir.fam.nodes$Genome), aes(group = Pair), alpha = 0.1, color = "gray25", size = 0.5) +
+  geom_point(alpha = 0.8, size = 2, shape = 16, aes(color = Family2)) +
+  scale_color_manual(name = "Virus Family",
+                     values = c(RColorBrewer::brewer.pal(8, "Set2")[c(2:5)], RColorBrewer::brewer.pal(8, "Set2")[c(1)], "slateblue4",RColorBrewer::brewer.pal(8, "Set2")[c(6)], "gray10", "gray75")) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right") + 
+  guides(color = guide_legend(override.aes=list(shape = 16, size=4)))
+
+#ntwk.vir
+
+
+
+
+#plot by rock type - only HQ
+
+vir.hab.nodes <- clstrd.nodes %>% 
+  left_join(select(clstr.master, VC, ClstrComp), by = "VC") %>% 
+  left_join(select(combo, checkv_quality, contig_length, Rocks_v2, VCStatus), by = c("VC" = "VCStatus")) %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  mutate(Rocks_v2 = ifelse(is.na(Rocks_v2), "Unknown", as.character(Rocks_v2))) #%>%
+# filter(Source == "refseq" | ClstrComp == "both") 
+
+vir.hab.nodes <- vir.hab.nodes[-c(66:67)]
+
+
+# Plot
+ntwk.hab.vir.hq <-  vir.hab.nodes %>% 
+  ggplot(aes(x, y)) +
+  geom_line(data = filter(edges, Genome %in% vir.hab.nodes$Genome), aes(group = Pair), alpha = 0.1, color = "gray25", size = 0.5) +
+  geom_point(alpha = 0.8, size = 2, shape = 16, aes(color = Rocks_v2)) +
+  scale_color_manual(name = "Rock Type",
+                     values =  c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "gray75", "#0072B2", "#D55E00", "#CC79A7")) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right") + 
+  guides(color = guide_legend(override.aes=list(shape = 16, size=4)))
+
+
+#ntwk.hab.vir.hq
+
+
+```
+
+
+# Generating Plots / Tables
+
+# Figure 1
+
+# Network + Bars
+```{r fig1, fig.width=14, fig.height=9}
+
+## rock type ## 
+meta.sub.rock <- combo %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(contig_length >= 10000) %>%
+  filter(ClusterStatus == "Clustered") %>%
+  group_by(Rocks_v2, Order) %>%
+  mutate(Order = ifelse(Order == "Unassigned", "Unique VC", "VC with reference genomes")) %>%
+  tally()  %>% 
+  arrange(desc(Rocks_v2)) %>%
+  mutate(lab_ypos = n + .1*n + ifelse(n > 40, ifelse(n < 50, 50, 20), 1)) %>%
+  mutate(norm = n / sum(n) * 100)
+
+
+a_hab_seq <-  ggplot(meta.sub.rock, aes(y = Rocks_v2, fill = Rocks_v2, color = Rocks_v2, x=n)) +
+  theme_bw() +
+  geom_bar(stat="identity", position="stack", width=.6, orientation="y") + 
+  scale_fill_manual(name="Habitat", values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","gray75")) +
+  scale_color_manual(name="Habitat", values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","gray75")) +
+  ylab("") + facet_wrap(~Order, scales = "free") +
+  xlab("Number of viral sequences") + 
+  scale_y_discrete(limits=rev)  + theme(legend.position = "none") #+
+ # geom_text(aes(x = lab_ypos,label = n, group = Rocks_v2), fontface = "bold", size = 4, color = "black") 
+
+## taxonomy ##
+tax.meta.vcs <- combo %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(contig_length >= 10000) %>%
+  filter(ClusterStatus == "Clustered" & Order != "Unassigned") %>%
+  mutate(Family = ifelse(Family == "Mixed", "Unclassified", as.character(Family))) %>%
+  group_by(Family) %>%
+  tally() %>% 
+  arrange(desc(n)) %>% 
+  group_by(Family) %>%
+  mutate(n2 = sum(n)) %>%
+  mutate(lab_ypos = n2 + 3)
+
+e_tax <- ggplot(tax.meta.vcs, aes(x = Family, fill = Family, y=n)) + 
+  theme_bw() +
+  geom_bar(stat="identity", position="stack", width=.6) + 
+  scale_fill_manual(values = c(RColorBrewer::brewer.pal(8, "Set2")[c(2:4)],RColorBrewer::brewer.pal(8, "Set2")[c(1)], "slateblue4", RColorBrewer::brewer.pal(8, "Set2")[c(6)], "gray75"))  +
+  ylab("Number of viral sequences") + 
+  xlab("")  +  theme(legend.position = "none") + 
+  coord_flip() + scale_x_discrete(limits=rev) # +
+  #geom_text(aes(y = lab_ypos,label = n2, group = Family), fontface = "bold", size = 4, color = "black") 
+
+
+
+( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) + plot_annotation(tag_levels = "A") 
+
+ggsave(filename = 'plots/exploratory/ant_network_plus_VC.png', plot = last_plot(), device = 'png', width = 14, height = 9, dpi = 300)
+
+
+```
+
+# Host/AMG plots
+```{r fig2, fig.width=10, fig.height=6}
+
+## Host plot ## 
+
+host.gen.tax <- readRDS("results/processed_data/host.gen.tax.RDS")
+meta <- vroom("data/metadata_all_samples.tsv")
+
+#join and rename
+host.vots <- left_join(host.gen.tax, vOTU.names, by = c("virus.names"= "rownames(otu_tab)"))
+host.vots <- host.vots[-c(1)]
+host.vots$HostPhylum <- host.vots$Phylum
+host.vots$HostClass <- host.vots$Class
+host.vots$HostOrder <- host.vots$Order
+host.vots$HostFamily <- host.vots$Family
+host.vots$HostGenus <- host.vots$Genus
+
+host.vots <- host.vots[-c(1:5)]
+
+
+host.gen.tax.meta <- left_join(combo, host.vots, by=c("votu.id" = "votu.id"))
+
+#fix labels
+host.gen.tax.meta <- host.gen.tax.meta %>%
+  mutate(HostPhylum = fct_explicit_na(HostPhylum, na_level = "No host prediction"),
+         HostClass = fct_explicit_na(HostClass, na_level = "No host prediction"),
+         HostOrder = fct_explicit_na(HostOrder, na_level = "No host prediction"),
+         HostFamily = fct_explicit_na(HostFamily, na_level = "No host prediction"),
+         HostGenus = fct_explicit_na(HostGenus, na_level = "No host prediction")) %>%
+  mutate(HostPhylum = ifelse(HostPhylum == "Mixed", "No host prediction", as.character(HostPhylum)),
+         HostClass = ifelse(HostClass == "Mixed", "No host prediction", as.character(HostClass)),
+         HostOrder = ifelse(HostOrder == "Mixed", "No host prediction", as.character(HostOrder)),
+         HostFamily = ifelse(HostFamily == "Mixed", "No host prediction", as.character(HostFamily)),
+         HostGenus = ifelse(HostGenus == "Mixed", "No host prediction", as.character(HostGenus)))
+
+host.gen.tax.meta.high <- host.gen.tax.meta %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(contig_length >= 10000)
+
+#summarize data
+host.gen.tax.meta.plotdata <- host.gen.tax.meta.high %>%
+  filter(HostPhylum != "No host prediction") %>%
+  group_by(HostPhylum) %>%
+  tally() %>% 
+  arrange(desc(n)) %>% 
+  group_by(HostPhylum) %>%
+  mutate(n2 = sum(n)) %>%
+  mutate(lab_ypos = n2 + 3)
+
+
+host_plot <- ggplot(host.gen.tax.meta.plotdata, aes(x = HostPhylum, fill = HostPhylum, y=n)) + 
+  theme_bw() +
+  geom_bar(stat="identity", position="stack", width=.6) + 
+  scale_fill_viridis_d(option="B") +
+  ylab("Number of viral sequences") + 
+  xlab("")  +  theme(legend.position = "none") + 
+  coord_flip() + scale_x_discrete(limits=rev) #+
+# geom_text(aes(y = lab_ypos,label = n2, group = HostPhylum), fontface = "bold", size = 4, color = "black") 
+
+
+## AMG plot ##
+
+DAMG_data_un_HQ <- DAMG_data_un %>%
+  filter(Genome %in% host.gen.tax.meta.high$Genome)
+
+#this has all annotations for a gene - so can have multiple annotations, we need to address or we will be over-counting
+DAMG_data_un_HQ_counts <- DAMG_data_un_HQ %>%
+  count(gene)
+
+DAMG_data_un_HQ <- left_join(DAMG_data_un_HQ, DAMG_data_un_HQ_counts)
+
+DAMG_data_un_HQ.singleAnnot <- DAMG_data_un_HQ %>%
+  group_by(gene) %>%
+  slice(1)
+
+AMGs <- left_join(DAMG_data_un_HQ.singleAnnot, host.gen.tax.meta.high) 
+
+amg.plotdata <- AMGs %>%
+  mutate(category = fct_explicit_na(category, na_level = "Unannotated"), 
+         module = fct_explicit_na(module, na_level = "Unannotated"),
+         header = ifelse(category == "Transporters", "Transporters", as.character(header)),
+         header = fct_explicit_na(header, na_level = "Unannotated"),
+         category = ifelse(category=="carbon utilization (Woodcroft)", "carbon utilization", as.character(category)),
+         header = ifelse(header=="sugar utilization (woodcroft)", "carbon utilization", as.character(header)),
+         category = ifelse(category == "MISC", "Information Systems", as.character(category)), 
+         category = ifelse(category == "carbon utilization", "Carbon Utilization", as.character(category))) %>%
+  group_by(category, header, module) %>%
+  tally() 
+
+amg_general <- ggplot(amg.plotdata, aes(x = category, fill = category, y=n)) + 
+  theme_bw() +
+  geom_bar(stat="identity", position="stack", width=.6) + coord_flip() + 
+  scale_fill_viridis_d(option = "G", direction=-1) +
+  ylab("Number of auxillary metabolic genes") + 
+  xlab("")  +  theme(legend.position = "none") + 
+   scale_x_discrete(limits=rev)
+
+
+host_plot + amg_general  +  
+  plot_annotation(tag_levels = "A") 
+
+ggsave(filename = 'plots/exploratory/art_virus_host_amg.pdf', plot = last_plot(), device = 'pdf', width = 10, height = 6, dpi = 300)
+
+
+```
+# Combined Fig 1
+
+```{r fig1_plot, fig.width=14, fig.height=8}
+# Figure 1
+( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) / (host_plot + amg_general) + plot_annotation(tag_levels = "A") 
+
+ggsave(filename = 'plots/fig1.pdf', plot = last_plot(), device = 'pdf', width = 14, height = 8, dpi = 300)
+#ggsave(filename = 'plots/fig1.png', plot = last_plot(), device = 'png', width = 14, height = 8, dpi = 300)
+```
+
+# Figure 2
+
+# vOTU analyses
+
+```{r morephyloseq, message=FALSE, warning=FALSE, fig.width=6, fig.height=10}
+
+#import vOTU and host data into phyloseq
+ps <- phyloseq(otu_tab, tax_file, mapping_file)
+
+## Get relative abundance averages for plotting ##
+
+# For some visualizations - show only genomes with a quality score from CheckV 
+
+votus.high <- unique(na.omit(checkv_cdhit_tax$votu.id[checkv_cdhit_tax$checkv_quality %in% c("High-quality", "Complete", "Medium-quality", "Low-quality") ]))
+votus.long <- checkv_cdhit_tax$votu.id[checkv_cdhit_tax$contig_length >= 10000]
+
+ps.HQ <- prune_taxa(votus.high, ps)
+ps.HQ.long <-  prune_taxa(votus.long, ps.HQ)
+
+ps.RA <- transform_sample_counts(ps.HQ.long,  function(x) x/sum(x))
+
+df_ps.RA.filt <- psmelt(ps.RA)
+
+
+## Site ## 
+
+grouped <- group_by(df_ps.RA.filt, Site.name...8, ClusterStatus, Phylum, Class, Order, Family, VCStatus, OTU)
+
+avgs_grouped <- summarise(grouped, mean = 100 * mean(Abundance), 
+                          sd = 100 * sd(Abundance))
+
+vOTU_avgs_grouped <- avgs_grouped
+
+vOTU_avgs_grouped <- vOTU_avgs_grouped %>% 
+  mutate(Family2 = ifelse(Family == "Unassigned", ifelse(ClusterStatus == "Clustered", "Unclassified", "Unclustered"), as.character(Family))) 
+
+
+vOTU_avgs_grouped$Site.name...8 <- factor(vOTU_avgs_grouped$Site.name...8, levels = c("Machu Picchu Base", "Dufayel Island", "Helliwell Hills", "Crater Circle", "Mt. Burrow", "Archambault Ridge", "Random Hills", "Kay Island", "Timber Peak", "Mt. New Zealand", "Mt. Dickason", "Mt. Nansen", "Mt. Keinath", "Anderson Ridge", "Vegetation Island", "Mt. Larsen",  "Inexpressible Island", "Mt. Billing", "Widowmaker Pass", "Trio Nunatak", "Unnamed Nunatak", "Harrow Peak", "Mt. McGee",  "Ricker Hills", "Mt. Bowen", "Pudding Butte", "Starr Nunatak", "Richard Nunatak", "Schultz Peak", "Battleship Promontory", "Convoy Range", "Mt. Elektra", "Siegfried Peak", "Linnaeus Terrace", "Finger Mt.", "University Valley", "Knobhead"))
+
+
+plot_s = ggplot(vOTU_avgs_grouped, aes(x = Site.name...8, y = (mean), fill = Family2)) + 
+  geom_bar(stat = "identity", position = "stack")
+
+site_bar_ra <- plot_s + theme_bw() +
+  theme(text = element_text(size = 14)) +
+  ylab("Mean Relative Abundance") + xlab("")  +
+  guides(fill = guide_legend(title = "Family")) +
+  scale_fill_viridis_d() #+  theme(legend.position = "none") +
+  #theme(axis.text.x = element_text(angle = -70, hjust = 0, vjust = 0.5)) 
+
+site_bar_ra + coord_flip()
+ggsave(filename = 'plots/exploratory/art_virus_RA_ictv.png', plot = last_plot(), device = 'png', width = 6, height = 10, dpi = 300)
+
+
+```
+
+```{r rock_plot, include=FALSE}
+## Rock Type ##
+
+grouped <- group_by(df_ps.RA.filt, Rocks_v2, ClusterStatus, Phylum, Class, Order, Family, OTU)
+
+avgs_grouped <- summarise(grouped, mean = 100 * mean(Abundance), 
+                          sd = 100 * sd(Abundance))
+
+vOTU_avgs_grouped <- avgs_grouped
+
+vOTU_avgs_grouped <- vOTU_avgs_grouped %>% 
+  mutate(Family2 = ifelse(Family == "Unassigned", ifelse(ClusterStatus == "Clustered", "Unclassified", "Unclustered"), as.character(Family)))
+
+plot = ggplot(vOTU_avgs_grouped, aes(x = Rocks_v2, y = (mean), fill = Family2)) + 
+  geom_bar(stat = "identity", position = "stack")
+
+plot + 
+  theme(axis.text.x = element_text(angle = -70, hjust = 0, vjust = 0.5), text = element_text(size = 18)) + 
+  ylab("Mean Relative Abundance") + xlab("Rock type") + 
+  guides(fill = guide_legend(title = "Family")) +
+  scale_fill_viridis_d() 
+
+
+ggsave(filename = 'plots/exploratory/art_virus_RA_ictv_rocks.png', plot = last_plot(), device = 'png', width = 30, height = 6, dpi = 300)
+
+```
+
+
+# Beta Diversity
+
+```{r beta_plot, fig.width=8, fig.height=6}
+#euclidean dist of hellinger transformation (hellinger distance)
+ps_hell <- transform(ps.HQ.long, "hellinger")
+
+ps_hell_ord <- ordinate(physeq = ps_hell, method = "PCoA", distance = "euclidean")
+
+ps_hell@sam_data$Site.name...8 <- factor(ps_hell@sam_data$Site.name...8, levels = c("Machu Picchu Base", "Dufayel Island", "Helliwell Hills", "Crater Circle", "Mt. Burrow", "Archambault Ridge", "Random Hills", "Kay Island","Timber Peak", "Mt. New Zealand", "Mt. Dickason", "Mt. Nansen",   "Mt. Keinath", "Anderson Ridge", "Vegetation Island", "Mt. Larsen",  "Inexpressible Island", "Mt. Billing", "Widowmaker Pass", "Trio Nunatak",  "Unnamed Nunatak", "Harrow Peak", "Mt. McGee",  "Ricker Hills", "Mt. Bowen", "Pudding Butte", "Starr Nunatak", "Richard Nunatak",  "Schultz Peak", "Battleship Promontory", "Convoy Range", "Mt. Elektra", "Siegfried Peak", "Linnaeus Terrace", "Finger Mt.", "University Valley", "Knobhead"))
+
+site_pcoa <- plot_ordination(physeq = ps_hell, 
+                ordination = ps_hell_ord, shape = "AreaSample", color = "Site.name...8") +
+  theme_bw()+
+  scale_shape_manual(name="Geographic Area", values = c(15:17)) +  geom_point(size = 4) + scale_color_viridis_d(name="Site", option="B") +
+  xlab("PCoA1 (15.1%)") + ylab("PCoA2 (5.9%)")  + theme(text = element_text(size = 14))
+
+
+site_pcoa
+ggsave("plots/exploratory/ant_pcoa_by_site.png",plot = last_plot(), device = 'png', width = 6, height = 6, dpi = 300)
+```
+
+
+```{r beta_stats, warning=FALSE, message=FALSE}
+set.seed(5311)
+
+#beta div stats
+Dist.hell <- phyloseq::distance(ps_hell, method = "euclidean", type = "samples")
+
+#here we will first test models with one variable to start
+#adonis tests for differences in centroid and/or dispersion
+#only variables we have without too many missing values are  geography (site / lat / long), rock type, and year 
+
+#adonis2(Dist.hell ~ Rocks_v2, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #sig, ~ 4% variation
+#adonis2(Dist.hell ~ Site.name...8, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #sig, ~ 33%
+#adonis2(Dist.hell ~ Year.of.collection, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #sig 2% varation
+#adonis2(Dist.hell ~ Latitude, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #sig 2% var
+#adonis2(Dist.hell ~ Longitude, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #not sig 
+#adonis2(Dist.hell ~ Latitude*Longitude, as(sample_data(ps_hell), "data.frame"), permutations = 9999) #sig 2% var each
+#adonis2(Dist.hell ~ Longitude*Latitude, as(sample_data(ps_hell), "data.frame"), permutations = 9999) # latitude explains more 3%, interacts with long, long not sig here
+
+#Sitename = a pseudo combination of lat & long so we wouldn't include all three in a model
+#Sitename >> more variation explained than lat alone or lat/long combined so going to use Site
+#in our next models
+#rock type does not interact with year / site, so four possible models, given that site & year interact, best models have site before year in the model as explains more variation - so two models now
+#adonis2(Dist.hell ~  Site.name...8 * Year.of.collection + Rocks_v2, as(sample_data(ps_hell), "data.frame"), permutations = 9999) # sig site 33%, year <1% not sig, rocks 1%, sitexyear 5%
+#adonis2(Dist.hell ~  Rocks_v2 +Site.name...8 * Year.of.collection , as(sample_data(ps_hell), "data.frame"), permutations = 9999) # sig rock up 4%, but site down 30% so likely site explains that missing bit when first
+
+#margin now to get contribution when other factors included vs. sequential
+#check interactions first
+#adonis2(formula = Dist.hell ~ Site.name...8 * Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin") #notsig
+#adonis2(formula = Dist.hell ~ Year.of.collection * Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin") #sig - so probably can't use margin model if both in model
+#adonis2(formula = Dist.hell ~ Year.of.collection * Site.name...8, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin") #sig
+
+#adonis2(formula = Dist.hell ~ Rocks_v2  + Site.name...8 + Year.of.collection, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin") # rock 2.5%, site 29%, year not sig 
+
+#using ordistep & capscale to do a less hypothesis driven approach
+#dbRDA (capscale), cca/rda != on dissimilarities
+# upr <- capscale(Dist.hell ~ ., data = select(as(sample_data(ps_hell), "data.frame"), "Site.name...8", "AreaSample", "Rocks_v2", "Year.of.collection"))
+# lwr <- capscale(Dist.hell ~ 1, data = as(sample_data(ps_hell), "data.frame"))
+#   
+# model <- ordistep(lwr, scope = formula(upr), trace=0) #site + areasample + rocks is best model (but should site be nested in areasample?)
+# model2 <- ordiR2step(lwr, upr, trace=0) #Site.name...8 only as best model
+
+# year was not in either model & rock was not in the second ordistep model! trying best models of just site + rock 
+#no interaction term with margin between these two
+
+#with margin
+adonis2(formula = Dist.hell ~  Site.name...8 + Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin") #site sig and most explanitory 
+
+#with terms
+adonis2(formula = Dist.hell ~ Site.name...8 + Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "terms") #site most important/explains most variation so put first in model
+
+#no posthoc adonis test so need to do pair-wise
+site.pair.res <- pairwise.adonis(x = Dist.hell, as.factor(as(sample_data(ps_hell), "data.frame")[,"Site.name...8"]), perm = 9999, p.adjust.m="BH")
+summary(site.pair.res$p.value < 0.05)
+write.csv(site.pair.res, "results/stats/site.pairwise.permanova.results.csv")
+
+rock.pair.res <- pairwise.adonis(x = Dist.hell, as.factor(as(sample_data(ps_hell), "data.frame")[,"Rocks_v2"]), perm = 9999, p.adjust.m="BH")
+summary(rock.pair.res$p.value < 0.05)
+write.csv(rock.pair.res, "results/stats/rock.pairwise.permanova.results.csv")
+
+#betadisper tests for dispersion only
+#only can test single variables
+#doing this as permanova are sensitive to dispersion differences 
+disp_dist_rock <- betadisper(Dist.hell, as(sample_data(ps_hell), "data.frame")[,"Rocks_v2"])
+permutest(disp_dist_rock, permutations = 9999, pairwise = TRUE)
+#sig
+
+disp_dist_site <- betadisper(Dist.hell, as(sample_data(ps_hell), "data.frame")[,"Site.name...8"])
+permutest(disp_dist_site, permutations = 9999, pairwise=TRUE) #sig
+
+#post hoc test to see which pairs driving
+tuk_disp_dist_rock <- TukeyHSD(disp_dist_rock)
+tuk_disp_dist_site <- TukeyHSD(disp_dist_site)
+
+summary(tidy(tuk_disp_dist_rock)$adj.p.value < 0.05)
+summary(tidy(tuk_disp_dist_site)$adj.p.value < 0.05)
+
+write.csv(tidy(tuk_disp_dist_rock), "results/stats/rock.tukeyposthoc.dispersion.csv")
+write.csv(tidy(tuk_disp_dist_site), "results/stats/site.tukeyposthoc.dispersion.csv")
+
+
+```
+
+# Distance Decay
+```{r dist}
+#distancy decay
+ps.dist <- ps.HQ.long
+
+#since most samples on one coast, removing rock type as possible variable
+ps.HQ.EC <- subset_samples(ps.dist, AreaSample != "Antarctic Peninsula")
+ps.HQ.EC <- subset_samples(ps.HQ.EC, Rocks_v2 == "Sandstone")
+
+#get lat and long
+geo = data.frame(ps.HQ.EC@sam_data$Longitude, 
+                 ps.HQ.EC@sam_data$Latitude)
+
+# defining geographic distance between two locations -
+# haversine distance (accounts for spherical earth)
+d.geo = distm(geo, fun = distHaversine)
+dist.geo = as.dist(d.geo)
+
+ps_hell <- transform(ps.HQ.EC, "hellinger")
+
+# getting community distances 
+#have to multiply by 1/sqrt(2) to get scaled 0-1 as current range is 0-sqrt(2)
+comm.dist.hell = vegdist(1/sqrt(2) * as.matrix(t(ps_hell@otu_table)), 
+                                  method = "euclidean")
+
+#test
+mantel.test.hell = vegan::mantel(comm.dist.hell, dist.geo, 
+                               method = "spearman", permutations = 9999, na.rm = TRUE)
+mantel.test.hell
+
+mantel.stats <- data.frame(label = paste("r = ", signif(mantel.test.hell$statistic,3), 
+                                       "\nP = ", signif(mantel.test.hell$signif, 3)))
+#plot
+dist_hell <- ggplot(mapping = aes(x = jitter(dist.geo/1000, amount = 1), y = comm.dist.hell)) + 
+  theme_bw() +
+  geom_point(shape = 16, size = 1, alpha = 0.1, color = "gray25") + 
+  geom_smooth(method = "lm", color ="#0292e3", se=F) + 
+  labs(x = "Geographical Separation (km)", y = "Hellinger Distance") +  geom_text(data = mantel.stats, aes(x = 475, y = .15, label = label), hjust = 0, size = 3) +
+  theme(text = element_text(size = 14)) 
+
+dist_hell
+
+
+# what happens if we remove all instances from same location
+# (e.g. geographic distance = 0)?
+
+# first transform to matrices to edit
+dist.geo.matrix <- as.matrix(dist.geo)
+comm.dist.matrix <- as.matrix(comm.dist.hell)
+
+# change all 0s to NAs
+dist.geo.matrix[dist.geo.matrix == 0] <- NA
+comm.dist.matrix[is.na(dist.geo.matrix)] <- NA
+
+# change back to distances
+dist.geo.nonzero <- as.dist(dist.geo.matrix)
+comm.dist.nonzero <- as.dist(comm.dist.matrix)
+
+# mantel test with no 0s bc using na.rm = TRUE
+mantel.test.nonzero = vegan::mantel(comm.dist.nonzero, 
+    dist.geo.nonzero, method = "spearman", permutations = 9999, 
+    na.rm = TRUE)
+
+mantel.test.nonzero
+
+
+```
+
+# Making a map of samples
+```{r map}
+
+
+worldmap <- ne_countries(scale = 'medium',
+                         returnclass = 'sf')
+
+antartcia_sf <- worldmap[worldmap$name == 'Antarctica',]
+#antartcia <- map_data("world") %>% filter(region=="Antarctica")
+
+meta <- meta %>%
+  arrange(desc(Latitude))
+
+meta$Site <- factor(meta$Site.name...8, levels = c("Machu Picchu Base", "Dufayel Island", "Helliwell Hills", "Crater Circle", "Mt. Burrow", "Archambault Ridge", "Random Hills", "Kay Island", "Timber Peak", "Mt. New Zealand", "Mt. Dickason", "Mt. Nansen",  "Mt. Keinath", "Anderson Ridge", "Vegetation Island", "Mt. Larsen",  "Inexpressible Island", "Mt. Billing", "Widowmaker Pass", "Trio Nunatak",  "Unnamed Nunatak", "Harrow Peak", "Mt. McGee",  "Ricker Hills", "Mt. Bowen", "Pudding Butte", "Starr Nunatak", "Richard Nunatak",   "Schultz Peak", "Battleship Promontory", "Convoy Range", "Mt. Elektra", "Siegfried Peak", "Linnaeus Terrace", "Finger Mt.", "University Valley", "Knobhead"))
+
+
+meta <- meta %>%
+  mutate(AreaSample = ifelse(AreaSample == "Northen Victoria Land", "Northern Victoria Land", as.character(AreaSample)))
+
+as.big.nocol <- ggplot() +
+  geom_sf(data=antartcia_sf) + coord_sf(expand = FALSE)+
+  geom_point( data=meta, aes(x=Longitude, y=Latitude, shape=AreaSample, color=AreaSample)) +
+  scale_shape_manual(name="Geographic Area", values = c(15:17))+
+  scale_color_manual(name="Geographic Area", values= c("black", "#FCFFA4", "#BB3754"))+
+  theme_bw()  +
+  xlab("Longitude") + ylab("Latitude") +
+  scale_y_continuous(limits = c(-85, -60)) + 
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5), panel.background = element_rect(fill = "#f5f9fa")) +
+    theme(text = element_text(size = 14)) 
+
+
+as.big.nocol  
+
+ggsave(filename = 'plots/exploratory/art_map.png', plot = last_plot(), device = 'png', width = 10, height = 6, dpi = 300)
+
+
+```
+
+# Figure 2
+```{r fig2_plots, fig.width=20, fig.height=10}
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 10, spaceLegend = 0.5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+
+#flip RA plot
+site_flip <- site_bar_ra + coord_flip() 
+
+(addSmallLegend(as.big.nocol +  theme(legend.position="top"))) / (addSmallLegend(site_flip +  theme(legend.position="left")) + ((addSmallLegend(site_pcoa) / dist_hell ) )) +  
+  plot_annotation(tag_levels = "A")
+
+ggsave(filename = 'plots/fig2.pdf', plot = last_plot(), device = 'pdf', width = 20, height = 10, dpi = 300)
+#ggsave(filename = 'plots/fig2.png', plot = last_plot(), device = 'png', width = 20, height = 10, dpi = 300)
+
+
+#without map
+#(site_flip + ( site_pcoa / dist_hell ))  +  
+#  plot_annotation(tag_levels = "A") + plot_layout(guides = 'collect')
+
+
+```
+
+
+# Data tables
+```{r tabs}
+
+## Tables to summarize all the info!
+write.csv(combo, 'results/vOTU_info.csv')
+
+#whole dataset
+
+#total number of unique VCs
+length(unique(combo$VCStatus)) -1 #Unclustered
+
+#total number of vOTUs
+length(unique(combo$votu.id))
+
+#total number of viral seqs
+length(unique(combo$Genome))
+
+
+checkv_cdhit_tax.meta.samplesum <- combo %>%
+    group_by(SampleID) %>%
+    summarise(contig_length_avg = mean(contig_length), 
+              gene_count_avg = mean(gene_count),
+              num_VCs = length(na.omit(unique(VCStatus))),
+              num_vOTUs = length(na.omit(unique(votu.id))),
+              num_seqs = length(na.omit(unique(Genome))))
+
+number_provirus <- combo %>%
+    group_by(SampleID, provirus) %>%
+    tally() %>%
+    filter(provirus == "Yes")
+
+number_provirus$provirus_num <- number_provirus$n
+
+number_check <- combo %>%
+    group_by(SampleID, checkv_quality) %>%
+    tally() %>%
+    spread(checkv_quality, n) %>%
+    replace(is.na(.), 0)
+
+checkv_cdhit_tax.meta.samplesum.combo <- checkv_cdhit_tax.meta.samplesum %>%
+    left_join(dplyr::select(number_provirus, SampleID, provirus_num)) %>%
+    left_join(number_check[-c(7)]) %>%
+    left_join(dplyr::select(sampledata2, SampleID, AreaSample, Site.name...8, `Year of collection`,Rocks_v2, Latitude,  Longitude)) %>%
+   replace(is.na(.), 0)
+
+#contig length
+summary(checkv_cdhit_tax.meta.samplesum.combo$contig_length_avg)
+
+#avg gene count per seq
+summary(checkv_cdhit_tax.meta.samplesum.combo$gene_count_avg)
+
+#avg number viral seq
+summary(checkv_cdhit_tax.meta.samplesum.combo$num_seqs)
+
+#total number of viral seq
+sum(checkv_cdhit_tax.meta.samplesum.combo$num_seqs)
+
+#avg number provirus
+summary(checkv_cdhit_tax.meta.samplesum.combo$provirus_num)
+
+#total number of provirus
+sum(checkv_cdhit_tax.meta.samplesum.combo$provirus_num)
+
+#total num complete genomes
+sum(checkv_cdhit_tax.meta.samplesum.combo$Complete)
+
+#total number high-quality
+sum(checkv_cdhit_tax.meta.samplesum.combo$`High-quality`)
+
+#total number medium-quality
+sum(checkv_cdhit_tax.meta.samplesum.combo$`Medium-quality`)
+
+
+write.csv(checkv_cdhit_tax.meta.samplesum.combo, 'results/sample_sum_info.csv')
+
+
+
+
+#filtered dataset
+combo.filt <- combo %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000)
+
+#total number of unique VCs
+length(unique(combo.filt$VCStatus)) -1 #Unclustered
+
+#total number of vOTUs
+length(unique(combo.filt$votu.id))
+
+#total number of viral seqs
+length(unique(combo.filt$Genome))
+
+checkv_cdhit_tax.meta.samplesum.filt <- combo.filt %>%
+    group_by(SampleID) %>%
+    summarise(contig_length_avg = mean(contig_length), 
+              gene_count_avg = mean(gene_count),
+              num_VCs = length(na.omit(unique(VCStatus))),
+              num_vOTUs = length(na.omit(unique(votu.id))),
+              num_seqs = length(na.omit(unique(Genome))))
+
+number_provirus.filt <- combo.filt %>%
+    group_by(SampleID, provirus) %>%
+    tally() %>%
+    filter(provirus == "Yes")
+
+number_provirus.filt$provirus_num <- number_provirus.filt$n
+
+number_check.filt <- combo.filt %>%
+    group_by(SampleID, checkv_quality) %>%
+    tally() %>%
+    spread(checkv_quality, n) %>%
+    replace(is.na(.), 0)
+
+checkv_cdhit_tax.meta.samplesum.combo.filt <- checkv_cdhit_tax.meta.samplesum.filt %>%
+    left_join(dplyr::select(number_provirus.filt, SampleID, provirus_num)) %>%
+    left_join(number_check.filt[-c(6)]) %>%
+    left_join(dplyr::select(sampledata2, SampleID, AreaSample, Site.name...8, `Year of collection`,Rocks_v2, Latitude,  Longitude)) %>%
+   replace(is.na(.), 0)
+
+#contig length
+summary(checkv_cdhit_tax.meta.samplesum.combo.filt$contig_length_avg)
+
+#avg gene count per seq
+summary(checkv_cdhit_tax.meta.samplesum.combo.filt$gene_count_avg)
+
+#avg number viral seq
+summary(checkv_cdhit_tax.meta.samplesum.combo.filt$num_seqs)
+
+#total number of viral seq
+sum(checkv_cdhit_tax.meta.samplesum.combo.filt$num_seqs)
+
+#avg number provirus
+summary(checkv_cdhit_tax.meta.samplesum.combo.filt$provirus_num)
+
+#total number of provirus
+sum(checkv_cdhit_tax.meta.samplesum.combo.filt$provirus_num)
+
+#total num complete genomes
+sum(checkv_cdhit_tax.meta.samplesum.combo.filt$Complete)
+
+#total number high-quality
+sum(checkv_cdhit_tax.meta.samplesum.combo.filt$`High-quality`)
+
+#total number medium-quality
+sum(checkv_cdhit_tax.meta.samplesum.combo.filt$`Medium-quality`)
+
+
+write.csv(checkv_cdhit_tax.meta.samplesum.combo.filt, 'results/sample_sum_info.filt.csv')
+
+
+```
+

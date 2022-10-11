@@ -1,0 +1,192 @@
+"","SampleID","contig_length_avg","gene_count_avg","num_VCs","num_vOTUs","num_seqs","provirus_num","Complete","High-quality","Low-quality","Medium-quality","AreaSample","Site.name...8","Year of collection","Rocks_v2","Latitude","Longitude"
+"1","BatPronordMG_2",18539.3442622951,23.672131147541,44,60,61,8,2,2,53,4,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"2","ButProsudMG_2",20279,23.8333333333333,15,18,18,1,0,2,15,1,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"3","FICUS_Selbmann_11",22786.8541666667,29.8333333333333,32,48,48,12,0,1,42,5,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"4","FICUS_Selbmann_12",13297.2,19.2,9,10,10,0,0,0,10,0,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"5","FICUS_Selbmann_13",24912.1929824561,32.8421052631579,39,55,57,10,1,4,42,10,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"6","FICUS_Selbmann_14",27948.6666666667,31.8888888888889,8,9,9,2,0,0,7,2,"Dry Valleys","Battleship Promontory",2015,"Sandstone",-76.901,160.91
+"7","FICUS_Selbmann_17",20608.4769230769,27.5384615384615,32,65,65,6,0,1,58,6,"Dry Valleys","University Valley",2015,"Sandstone",-77.875,160.74
+"8","FICUS_Selbmann_18",23269.725,28.75,28,40,40,5,0,0,33,7,"Dry Valleys","University Valley",2015,"Sandstone",-77.875,160.739
+"9","FICUS_Selbmann_19",24569.5957446808,28.2127659574468,31,47,47,10,0,1,44,2,"Dry Valleys","University Valley",2015,"Sandstone",-77.875,160.739
+"10","FICUS_Selbmann_2",24660.64,29.1,34,49,50,9,0,0,45,5,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"11","FICUS_Selbmann_20",21501.6060606061,29.2424242424242,20,33,33,6,0,0,28,5,"Dry Valleys","University Valley",2015,"Sandstone",-77.873,160.755
+"12","FICUS_Selbmann_21",19417.3220338983,25.3220338983051,33,58,59,8,0,0,56,3,"Dry Valleys","Mt. Elektra",2015,"Sandstone",-77.491,160.905
+"13","FICUS_Selbmann_23",28137.9523809524,30.8571428571429,15,21,21,2,0,1,19,1,"Dry Valleys","Mt. Elektra",2015,"Sandstone",-77.491,160.905
+"14","FICUS_Selbmann_24",43442,36.5,4,4,4,0,0,0,3,1,"Dry Valleys","Mt. Elektra",2015,"Sandstone",-77.491,160.905
+"15","FICUS_Selbmann_25",25321.3636363636,30.9393939393939,22,33,33,3,1,1,27,4,"Dry Valleys","Mt. Elektra",2015,"Sandstone",-77.491,160.905
+"16","FICUS_Selbmann_27",19431.9,23.725,25,40,40,8,0,1,35,4,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"17","FICUS_Selbmann_28",22618.3617021277,30.3617021276596,25,47,47,6,2,1,35,9,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"18","FICUS_Selbmann_29",19593.4920634921,25.5873015873016,45,63,63,5,1,1,55,6,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"19","FICUS_Selbmann_3",26785.1860465116,30.953488372093,33,40,43,3,0,0,39,4,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"20","FICUS_Selbmann_30",24651.3333333333,26.6410256410256,26,35,39,4,0,1,35,3,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"21","FICUS_Selbmann_31",23033.2765957447,26.0851063829787,32,46,47,5,0,2,45,0,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"22","FICUS_Selbmann_32",21231.3333333333,25.974358974359,22,39,39,12,0,2,36,1,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"23","FICUS_Selbmann_33",18757.6,23.6,26,40,40,5,0,0,35,5,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"24","FICUS_Selbmann_34",19460.6041666667,24.9166666666667,32,48,48,8,0,0,45,3,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"25","FICUS_Selbmann_35",19868.6949152542,25.2542372881356,39,59,59,7,0,1,54,4,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.492,160.907
+"26","FICUS_Selbmann_37",23457.1379310345,29.7758620689655,30,58,58,6,1,1,47,9,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.179,162.515
+"27","FICUS_Selbmann_38",21639.8571428571,29.6984126984127,37,60,63,7,0,1,51,11,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.179,162.515
+"28","FICUS_Selbmann_4",28359.0588235294,33.0882352941176,22,28,34,4,0,2,28,4,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"29","FICUS_Selbmann_40",28132.3333333333,26.6666666666667,6,6,6,0,0,1,5,0,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.179,162.515
+"30","FICUS_Selbmann_41",20358.75,26.9107142857143,36,56,56,8,0,0,48,8,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.179,162.515
+"31","FICUS_Selbmann_42",20352.3571428571,25.6428571428571,7,14,14,0,0,0,13,1,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.179,162.515
+"32","FICUS_Selbmann_44",28169.3953488372,37.4186046511628,26,43,43,17,0,1,32,10,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"33","FICUS_Selbmann_45",31231.7037037037,39.4814814814815,22,27,27,9,1,1,20,5,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"34","FICUS_Selbmann_47",24501.064516129,31.2258064516129,33,62,62,12,0,1,53,8,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"35","FICUS_Selbmann_48",20643.5454545455,23.4545454545455,13,22,22,9,0,0,21,1,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"36","FICUS_Selbmann_49",22392.4426229508,27.2786885245902,36,60,61,15,0,3,52,6,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"37","FICUS_Selbmann_5",19748.0512820513,22.8974358974359,29,38,39,6,0,0,39,0,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"38","FICUS_Selbmann_51",21294,26.8846153846154,21,26,26,7,0,0,23,3,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"39","FICUS_Selbmann_52",27159.0454545455,35,35,44,44,15,1,1,36,6,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"40","FICUS_Selbmann_53",17739.7083333333,21.1666666666667,20,24,24,3,0,3,19,2,"Northen Victoria Land","Unnamed Nunatak",2015,"Sandstone",-75.662,158.876
+"41","FICUS_Selbmann_54",17782.12,21.28,21,25,25,4,0,3,21,1,"Northen Victoria Land","Unnamed Nunatak",2015,"Sandstone",-75.662,158.876
+"42","FICUS_Selbmann_56",32306.0769230769,42.5384615384615,9,13,13,4,0,0,11,2,"Northen Victoria Land","Unnamed Nunatak",2015,"Sandstone",-75.662,158.876
+"43","FICUS_Selbmann_57",26691.6923076923,29.0769230769231,9,13,13,5,0,0,10,3,"Northen Victoria Land","Unnamed Nunatak",2015,"Sandstone",-75.662,158.876
+"44","FICUS_Selbmann_58",28027.5,30.625,6,7,8,5,0,0,7,1,"Northen Victoria Land","Unnamed Nunatak",2015,"Sandstone",-75.662,158.876
+"45","FICUS_Selbmann_59",23431.6666666667,29,36,71,75,16,0,2,66,7,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"46","FICUS_Selbmann_6",27194.7173913043,33.5652173913044,32,45,46,10,0,1,37,8,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"47","FICUS_Selbmann_60",21210.6923076923,27.3461538461538,45,77,78,13,0,1,68,9,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"48","FICUS_Selbmann_61",25556.2159090909,33.2159090909091,51,88,88,19,0,1,72,15,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"49","FICUS_Selbmann_62",25090.5360824742,30.7525773195876,53,96,97,21,0,4,86,7,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"50","FICUS_Selbmann_63",23646.8144329897,30.2164948453608,54,96,97,19,0,5,85,7,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"51","FICUS_Selbmann_64",24472.0625,30.1875,20,32,32,6,0,0,29,3,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"52","FICUS_Selbmann_65",20433.9571428571,25.1571428571429,39,69,70,14,0,0,64,6,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"53","FICUS_Selbmann_66",25399.6470588235,31.6470588235294,10,17,17,4,0,1,14,2,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.974
+"54","FICUS_Selbmann_67",18988.3188405797,25.2463768115942,37,68,69,8,0,0,64,5,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"55","FICUS_Selbmann_68",20854.5818181818,27.0181818181818,31,54,55,7,0,0,49,6,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"56","FICUS_Selbmann_7",20554.4285714286,23.3214285714286,15,27,28,5,0,1,25,2,"Dry Valleys","Linnaeus Terrace",2015,"Sandstone",-77.6,161.083
+"57","FICUS_Selbmann_70",19191.7547169811,24,32,49,53,10,0,0,50,3,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"58","FICUS_Selbmann_71",20257,25.0714285714286,42,67,70,11,0,1,62,7,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"59","FICUS_Selbmann_72",20139.4210526316,26.1052631578947,33,55,57,8,0,0,51,6,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"60","FICUS_Selbmann_73",16374.2857142857,21.2857142857143,9,14,14,2,0,0,12,2,"Dry Valleys","Linnaeus Terrace",2018,"Sandstone",-77.598,161.007
+"61","FICUS_Selbmann_74",21117.2469135802,27.7777777777778,55,81,81,19,0,2,71,8,"Dry Valleys","Battleship Promontory",2004,"Sandstone",-76.91,160.935
+"62","FICUS_Selbmann_76",16660.2702702703,20.8783783783784,49,73,74,4,0,0,69,5,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"63","FICUS_Selbmann_77",19374.358974359,25.2307692307692,25,39,39,7,0,0,38,1,"Dry Valleys","Battleship Promontory",2004,"Sandstone",-76.91,160.935
+"64","FICUS_Selbmann_78",34898.0067114094,42.7785234899329,51,149,149,68,8,12,101,28,"Dry Valleys","Battleship Promontory",2004,"Sandstone",-76.91,160.935
+"65","FICUS_Selbmann_79",26549.4615384615,36.7179487179487,24,39,39,6,1,2,29,7,"Dry Valleys","Linnaeus Terrace",2004,"Sandstone",-77.598,161.007
+"66","FICUS_Selbmann_8",23846.8421052632,30.4736842105263,14,19,19,2,0,0,16,3,"Dry Valleys","Linnaeus Terrace",2015,"Sandstone",-77.6,161.083
+"67","FICUS_Selbmann_80",20746.0238095238,26.6904761904762,45,84,84,17,0,0,79,5,"Dry Valleys","Linnaeus Terrace",2004,"Sandstone",-77.598,161.007
+"68","FICUS_Selbmann_82",18716,26.6470588235294,13,17,17,2,0,0,15,2,"Dry Valleys","Linnaeus Terrace",2004,"Sandstone",-77.598,161.007
+"69","FICUS_Selbmann_84",16642.2,18.9,8,10,10,0,1,1,8,0,"Dry Valleys","University Valley",2004,"Sandstone",-77.875,160.739
+"70","FICUS_Selbmann_85",20645.4814814815,26.8518518518519,17,27,27,4,0,2,22,3,"Dry Valleys","University Valley",2004,"Sandstone",-77.875,160.739
+"71","FICUS_Selbmann_87",19937.8,25.84,12,25,25,4,0,0,22,3,"Dry Valleys","University Valley",2004,"Sandstone",-77.875,160.739
+"72","FICUS_Selbmann_88",19223.5294117647,25.2470588235294,52,81,85,11,0,1,75,9,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"73","FICUS_Selbmann_89",20437.9603960396,23.4752475247525,68,97,101,13,0,2,94,5,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"74","FICUS_Selbmann_9",23419.2181818182,30.9090909090909,44,55,55,10,0,1,48,6,"Dry Valleys","Linnaeus Terrace",2015,"Sandstone",-77.6,161.083
+"75","FICUS_Selbmann_91",22684.813559322,29.0169491525424,36,59,59,14,1,1,50,7,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"76","FICUS_Selbmann_92",16789.6567164179,22.134328358209,48,66,67,9,0,1,61,5,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"77","FICUS_Selbmann_93",20931.65625,26.5625,41,62,64,8,1,1,55,7,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"78","FICUS_Selbmann_94",19289.5714285714,24.797619047619,50,82,84,16,0,1,78,5,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"79","FICUS_Selbmann_95",22505.679245283,31.0943396226415,41,53,53,10,0,4,43,6,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"80","FICUS_Selbmann_96",18851.8205128205,23,28,39,39,5,0,1,34,4,"Dry Valleys","Battleship Promontory",2010,"Sandstone",-76.91,160.935
+"81","FingerMtnordMG_2",22838.030075188,27.7669172932331,80,133,133,25,1,2,119,11,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.911,161.577
+"82","FingerMtsudMG_2",18429.9081632653,23.1020408163265,68,98,98,12,0,1,89,8,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.755,160.745
+"83","KnobheadnordMG_2",18162.5465116279,23.0581395348837,52,85,86,14,0,3,76,7,"Dry Valleys","Knobhead",2015,"Sandstone",-77.91,161.579
+"84","KnobheadsudMG_2",21266.7179487179,25.2564102564103,49,73,78,16,0,4,69,5,"Dry Valleys","Knobhead",2015,"Sandstone",-77.911,161.577
+"85","LinTernordMG_2",21827.4264705882,29.7352941176471,47,68,68,10,0,2,60,6,"Dry Valleys","Linnaeus Terrace",2015,"Sandstone",-77.6,161.083
+"86","Mars-1",22195.9933333333,29.6266666666667,86,150,150,27,1,2,130,17,"Northen Victoria Land","Mt. Bowen",2010,"Sandstone",-75.75,161.08333
+"87","Mars-10",20115.9295774648,26.1267605633803,82,142,142,16,0,1,127,14,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75025,160.74569
+"88","Mars-11",21269.9545454545,26.9675324675325,88,152,154,19,0,0,136,18,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75026,160.74589
+"89","Mars-12",21766.1777777778,28.4,81,134,135,20,1,1,120,13,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75027,160.74586
+"90","Mars-13",22139.4635761589,27.7483443708609,85,151,151,26,1,4,128,18,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75025,160.74553
+"91","Mars-14",20562.578125,21.828125,38,60,64,7,0,1,57,6,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75281,160.74444
+"92","Mars-15",21173.8,26.84,69,99,100,17,1,1,89,9,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75281,160.74586
+"93","Mars-16",23288.8059701493,26.6865671641791,89,134,134,12,0,0,127,7,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75281,160.74422
+"94","Mars-17",20204.5843373494,26.5180722891566,98,162,166,19,1,3,144,18,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75286,160.74453
+"95","Mars-18",19994.1065573771,24.3688524590164,72,122,122,8,0,1,104,17,"Dry Valleys","Finger Mt.",2015,"Sandstone",-77.75278,160.74422
+"96","Mars-19",20502.0943396226,24.6792452830189,32,47,53,4,0,1,51,1,"Northen Victoria Land","Schultz Peak",2015,"Sandstone",-76.01558,160.8934
+"97","Mars-2",20887.8630136986,26.1780821917808,85,146,146,31,0,2,133,11,"Northen Victoria Land","Archambault Ridge",2010,"Granite",-74.74069,162.67567
+"98","Mars-20",23435.1485148515,29.8910891089109,64,100,101,15,1,6,85,9,"Northen Victoria Land","Schultz Peak",2015,"Sandstone",-76.01558,160.8934
+"99","Mars-21b",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Timber Peak",2018,"Sandstone",-74.17203,162.42919
+"100","Mars-22",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Timber Peak",2018,"Sandstone",-74.17203,162.42919
+"101","Mars-23",22521.1641791045,27.5970149253731,73,132,134,29,0,6,110,18,"Northen Victoria Land","Helliwell Hills",2015,"Sandstone",-71.79353,161.995717
+"102","Mars-24",18120.2882882883,22.5855855855856,65,105,111,18,0,7,100,4,"Northen Victoria Land","Helliwell Hills",2015,"Sandstone",-71.73167,161.375667
+"103","Mars-25",22864.8450704225,29.5211267605634,48,71,71,13,0,0,65,6,"Northen Victoria Land","Helliwell Hills",2015,"Sandstone",-71.72968,161.3879
+"104","Mars-26",22299.8666666667,28.6611111111111,95,179,180,37,0,2,163,15,"Northen Victoria Land","Helliwell Hills",2015,"Sandstone",-71.72968,161.3879
+"105","Mars-27b",23928.4029850746,32.5522388059701,44,67,67,13,0,1,55,11,"Northen Victoria Land","Helliwell Hills",2015,"Sandstone",-71.72968,161.3879
+"106","Mars-28",23914.396039604,31.3019801980198,111,202,202,44,1,3,166,32,"Northen Victoria Land","Mt. Keinath",2010,"Granite",-74.5505,164.06547
+"107","Mars-29",23979.8676470588,28.2352941176471,48,68,68,18,0,4,59,5,"Northen Victoria Land","Mt. Dickason",2010,"Granite",-74.39958,164.00597
+"108","Mars-3",21351.1666666667,26.0583333333333,66,120,120,22,0,2,108,10,"Northen Victoria Land","Archambault Ridge",2010,"Sandstone",-73.66942,162.59369
+"109","Mars-30",22803.3363636364,29.4636363636364,72,110,110,17,3,4,94,9,"Northen Victoria Land","Mt. Dickason",2010,"Granite",-74.39958,164.00597
+"110","Mars-31",21387.0574712644,26.1264367816092,50,87,87,9,0,1,79,7,"Northen Victoria Land","Mt. Burrow",2010,"Granite",-73.66667,163.66667
+"111","Mars-32",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Random Hills",2010,"Granite",-74.01,164.36667
+"112","Mars-33",22433.9132653061,28.5918367346939,87,196,196,39,2,2,177,15,"Northen Victoria Land","Random Hills",2010,"Granite",-74.01,164.36667
+"113","Mars-34",23979.9375,30.7410714285714,66,112,112,22,2,2,97,11,"Northen Victoria Land","Random Hills",2010,"Granite",-74.01,164.36667
+"114","Mars-35",27185.3378378378,27.1621621621622,33,74,74,13,0,0,67,7,"Northen Victoria Land","Mt. McGee",2010,"Granite",-75.666667,161.26667
+"115","Mars-36",20145.6857142857,25.1857142857143,39,70,70,13,0,1,60,9,"Northen Victoria Land","Mt. McGee",2010,"Granite",-75.666667,161.26667
+"116","Mars-37b",23901.3316062176,30.9740932642487,87,192,193,33,1,4,163,25,"Northen Victoria Land","Harrow Peak",2010,"Granite",-75.666667,161.26667
+"117","Mars-38",24674.9792746114,30.699481865285,98,192,193,50,1,1,166,25,"Northen Victoria Land","Starr Nunatak",2004,"Granite",-75.89853,162.59289
+"118","Mars-39",21297.3738317757,26.8878504672897,55,107,107,23,0,3,92,12,"Northen Victoria Land","Starr Nunatak",2004,"Granite",-75.89853,162.59289
+"119","Mars-40",27528.3606557377,33.1475409836066,31,61,61,24,0,3,48,10,"Northen Victoria Land","Starr Nunatak",2004,"Granite",-75.89853,162.59289
+"120","Mars-41",22732.303030303,28.8424242424242,92,165,165,29,0,2,142,21,"Northen Victoria Land","Starr Nunatak",2004,"Granite",-75.89853,162.59289
+"121","Mars-42",24366.8032786885,29.8032786885246,64,121,122,34,0,1,101,20,"Northen Victoria Land","Starr Nunatak",2004,"Granite",-75.89853,162.59289
+"122","Mars-43",25191.4563106796,30.7572815533981,50,102,103,23,2,3,86,12,"Northen Victoria Land","Kay Island",2010,"Quartz",-74.07042,165.31667
+"123","Mars-44",19439.2213114754,25.9344262295082,70,122,122,25,0,0,111,11,"Northen Victoria Land","Kay Island",2010,"Quartz",-74.07039,165.31614
+"124","Mars-45",25687.547826087,32.6434782608696,92,230,230,56,3,7,201,19,"Northen Victoria Land","Kay Island",2010,"Quartz",-74.0705,165.316
+"125","Mars-46",24472.7978142076,30.3661202185792,95,183,183,42,2,2,157,22,"Northen Victoria Land","Inexpressible Island",2010,"Sandstone",-74.88931,163.7455
+"126","Mars-47",21675.75,29.4705882352941,32,68,68,5,0,1,56,11,"Northen Victoria Land","Inexpressible Island",2010,"Granite",-74.88931,163.7455
+"127","Mars-48",24661.010989011,31.0659340659341,45,89,91,17,0,2,75,14,"Northen Victoria Land","Inexpressible Island",2010,"Granite",-74.88931,163.7455
+"128","Mars-49",22150.371257485,28.9760479041916,93,165,167,32,1,1,145,20,"Northen Victoria Land","Inexpressible Island",2010,"Granite",-74.88931,163.7455
+"129","Mars-4b",20284.8636363636,22.5909090909091,14,22,22,1,0,8,14,0,"Northen Victoria Land","Finger Mt.",2010,"Sandstone",-75.69142,160.43256
+"130","Mars-5",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.70406,159.22761
+"131","Mars-50b",22510.8636363636,29.5,8,22,22,3,0,1,19,2,"Northen Victoria Land","Inexpressible Island",2010,"Granite",-74.88931,163.7455
+"132","Mars-51b",22220.0517241379,26.9655172413793,31,58,58,14,0,2,47,9,"Northen Victoria Land","Inexpressible Island",2010,"Granite",-74.88931,163.7455
+"133","Mars-52",22057.2121212121,29.6818181818182,31,66,66,7,0,5,54,7,"Northen Victoria Land","Mt. Larsen",2010,"Granite",-74.88439,162.16611
+"134","Mars-53",18833.98,26.88,49,100,100,7,1,2,91,6,"Northen Victoria Land","Mt. Larsen",2010,"Granite",-74.88439,162.16611
+"135","Mars-54",21012.3553719008,26.5123966942149,75,121,121,25,0,3,109,9,"Northen Victoria Land","Mt. Nansen",2010,"Granite",-74.53639,162.56528
+"136","Mars-55",22610.4,27.1,20,30,30,5,0,0,27,3,"Northen Victoria Land","Mt. Nansen",2010,"Granite",-74.56778,162.24361
+"137","Mars-56",24614.3738317757,32.9345794392523,66,107,107,24,0,0,89,18,"Northen Victoria Land","Mt. Nansen",2010,"Granite",-74.62861,162.59389
+"138","Mars-57b",20434.8078817734,26.3399014778325,106,203,203,62,0,2,179,22,"Northen Victoria Land","Vegetation Island",2004,"Granite",-74.78417,163.65972
+"139","Mars-58",24086.5462555066,31.2422907488987,114,226,227,62,1,5,190,31,"Northen Victoria Land","Vegetation Island",2004,"Granite",-74.78417,163.65972
+"140","Mars-59",19696.5850340136,26.3333333333333,70,144,147,17,0,1,136,10,"Northen Victoria Land","Vegetation Island",2010,"Granite",-74.78417,163.65972
+"141","Mars-6",18418.5,24.8333333333333,42,54,54,3,0,0,50,4,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.70406,159.22761
+"142","Mars-60b",20296.0810810811,26.8738738738739,62,111,111,16,1,1,104,5,"Northen Victoria Land","Mt. Burrow",2010,"Granite",-73.66667,163.66667
+"143","Mars-61",23924.1261261261,28.6396396396396,66,111,111,25,0,1,96,14,"Northen Victoria Land","Widowmaker Pass",2010,"Granite",-74.93278,162.40444
+"144","Mars-62",16634.5789473684,18.2105263157895,11,19,19,1,0,2,17,0,"Northen Victoria Land","Widowmaker Pass",2010,"Granite",-74.93278,162.40444
+"145","Mars-63",21142.3020833333,24.15625,52,95,96,17,0,0,90,6,"Northen Victoria Land","Widowmaker Pass",2010,"Granite",-74.93278,162.40444
+"146","Mars-64",23569.0746268657,27.6791044776119,75,134,134,22,1,7,117,9,"Northen Victoria Land","Widowmaker Pass",2010,"Granite",-74.93278,162.40444
+"147","Mars-65",24491.3396226415,29.9245283018868,26,52,53,9,1,2,46,4,"Northen Victoria Land","Crater Circle",2010,"Granite",-72.60333,169.34883
+"148","Mars-66",22846.8144329897,29.9381443298969,95,194,194,40,1,1,163,29,"Northen Victoria Land","Mt. Billing",2010,"Basalt/Dolerite",-75.703333,160.908
+"149","Mars-67b",21369.3435114504,29.8473282442748,63,131,131,18,1,4,114,12,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"150","Mars-68",23999.36,27.68,19,25,25,3,0,6,17,2,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"151","Mars-69",22492.75,28.25,28,36,36,9,0,2,30,4,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"152","Mars-7",19271.8055555556,23.6944444444444,27,36,36,10,0,5,30,1,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.70406,159.22761
+"153","Mars-70",22497.0652173913,30.5923913043478,97,184,184,38,0,2,161,21,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"154","Mars-71",30323.2372881356,36.3050847457627,39,59,59,14,0,5,50,4,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"155","Mars-72",17931.0476190476,20.8571428571429,13,21,21,2,0,2,18,1,"Northen Victoria Land","Mt. Billing",2010,"Sandstone",-75.70525,160.91389
+"156","Mars-73",24189.9142857143,29.8714285714286,28,70,70,8,0,2,63,5,"Northen Victoria Land","Crater Circle",2010,"Granite",-72.60333,169.34883
+"157","Mars-74",30906.8181818182,38.3333333333333,16,33,33,5,0,1,28,4,"Northen Victoria Land","Anderson Ridge",2010,"Granite",-74.714167,162.617778
+"158","Mars-75b",20119.1428571429,23.6190476190476,15,21,21,1,0,2,19,0,"Northen Victoria Land","Pudding Butte",2010,"Sandstone",-75.86667,159.98333
+"159","Mars-76",22170.9677419355,27.6451612903226,39,62,62,8,0,6,54,2,"Northen Victoria Land","Pudding Butte",2010,"Sandstone",-75.86747,159.98272
+"160","Mars-77",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Timber Peak",2010,"Sandstone",-74.17028,162.42553
+"161","Mars-78",39555.6,42.4,4,5,5,3,0,0,4,1,"Dry Valleys","Mt. Elektra",2018,"Sandstone",-77.491667,160.90672
+"162","Mars-79",21109.4451612903,29.1870967741935,97,155,155,28,0,2,142,11,"Dry Valleys","Siegfried Peak",2015,"Sandstone",-77.578694,161.78658
+"163","Mars-80",22618.5071090047,30.7014218009479,119,211,211,34,1,3,183,24,"Dry Valleys","Siegfried Peak",2015,"Sandstone",-77.578694,161.78658
+"164","Mars-81",22194.0182648402,30.5068493150685,119,216,219,50,2,5,188,24,"Dry Valleys","Siegfried Peak",2015,"Sandstone",-77.57775,161.78817
+"165","Mars-82",21613.8461538462,23.3846153846154,11,13,13,0,0,1,11,1,"Dry Valleys","Convoy Range",2004,"Sandstone",-76.965944,160.765556
+"166","Mars-83",25268.6923076923,27.1538461538462,23,26,26,8,0,1,21,4,"Dry Valleys","Convoy Range",2004,"Sandstone",-76.941667,161.078889
+"167","Mars-84",27337.7163120567,32.8368794326241,75,140,141,29,1,5,119,16,"Dry Valleys","Convoy Range",2004,"Sandstone",-76.965944,160.765556
+"168","Mars-85b",21965.2330097087,27.495145631068,64,103,103,19,0,1,95,7,"Northen Victoria Land","Inexpressible Island",1998,"Granite",-74.889306,163.7455
+"169","Mars-86",23566.7543859649,29.6491228070175,28,56,57,12,1,2,48,6,"Northen Victoria Land","Mt. Billing",1996,"Sandstone",-75.70525,160.913889
+"170","Mars-87b",24959.8550724638,29.8405797101449,44,69,69,15,0,2,59,8,"Northen Victoria Land","Anderson Ridge",1996,"Granite",-74.714167,162.617778
+"171","Mars-88",22739.544,30.836,91,250,250,33,4,5,206,35,"Antarctic Peninsula","Dufayel Island",2001,"Basalt/Dolerite",-62.16608,-58.55799
+"172","Mars-89b",22274.0229007634,26.1297709923664,54,131,131,15,2,7,107,15,"Antarctic Peninsula","Machu Picchu Base",2001,"Quartz",-62.10008,-58.51664
+"173","Mars-8b",25456.0666666667,28.8,10,15,15,4,1,0,13,1,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.70406,159.22761
+"174","Mars-9",19561.0263157895,23.8026315789474,50,74,76,11,0,2,70,4,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.70406,159.22761
+"175","Mars-90b",24431.5450819672,31.8196721311475,71,244,244,40,7,0,214,23,"Antarctic Peninsula","Machu Picchu Base",2001,"Quartz",-62.10008,-58.51664
+"176","Mars-91",26986.1875,29.6875,11,16,16,1,0,1,13,2,"Northen Victoria Land","Mt. Billing",1996,"Granite",-74.889306,163.7455
+"177","Mars-92",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Timber Peak",2018,"Sandstone",-74.172028,162.429192
+"178","Mars-93",21762.453125,27.390625,63,128,128,15,0,4,109,15,"Northen Victoria Land","Vegetation Island",2004,"Granite",-74.784167,163.659722
+"179","Mars-94",24130.24,30.808,73,125,125,29,0,1,109,15,"Northen Victoria Land","Mt. Dickason",2010,"Granite",-74.399583,164.005972
+"180","Mars-95",24542.375,29.225,23,40,40,5,0,5,34,1,"Northen Victoria Land","Mt. Dickason",2010,"Granite",-74.399583,164.005972
+"181","MtNewZealnordMG_2",23448.7708333333,30.0625,60,93,96,21,0,1,78,17,"Northen Victoria Land","Mt. New Zealand",2015,"Sandstone",-74.178,162.514
+"182","PudButnordMG_2",0,0,0,0,0,0,0,0,0,0,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.973
+"183","PudButsudMG_2",21684.5,25.6029411764706,40,67,68,12,0,5,57,6,"Northen Victoria Land","Pudding Butte",2015,"Sandstone",-75.858,159.973
+"184","RickerHillsnord_2",19687.3653846154,25.2307692307692,39,51,52,8,0,2,45,5,"Northen Victoria Land","Ricker Hills",2015,"Sandstone",-75.703,159.233
+"185","RicNunsandstonMG_3",20196.3232323232,24.4040404040404,50,99,99,12,0,1,91,7,"Northen Victoria Land","Richard Nunatak",2015,"Sandstone",-75.933,159.8
+"186","RicNunsandstonMG_4",22343.1067961165,28.9708737864078,70,102,103,20,0,2,86,15,"Northen Victoria Land","Richard Nunatak",2015,"Sandstone",-75.933,159.797
+"187","SiePeanordMG_2",22660.9130434783,30,74,115,115,20,1,1,95,18,"Dry Valleys","Siegfried Peak",2015,"Sandstone",-77.578,161.786
+"188","SiePeasudMG_2",25978.9485294118,33.9705882352941,87,136,136,38,1,2,110,23,"Dry Valleys","Siegfried Peak",2015,"Sandstone",-77.578,161.786
+"189","TrioNunataknord_2",23115.3086419753,28.2839506172839,46,80,81,26,1,4,71,5,"Northen Victoria Land","Trio Nunatak",2015,"Sandstone",-75.482,159.591
+"190","UniValnordMG_2",17687.4603174603,23.1746031746032,40,62,63,11,0,3,56,4,"Dry Valleys","University Valley",2015,"Sandstone",-77.874,160.739
+"191","UniValsudMG_2",21404.0769230769,27.3076923076923,91,139,143,19,0,4,123,16,"Dry Valleys","University Valley",2015,"Sandstone",-77.872,160.755
