@@ -1,4 +1,4 @@
 plots/exploratory
 results/processed_data/*.csv
 data/
-processed_data/antvir_tpm_75_tidy.RDS
+results/processed_data/antvir_tpm_75_tidy.RDS
