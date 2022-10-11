@@ -1,2 +1,3 @@
 plots/exploratory
 results/processed_data/*.csv
+data/
