@@ -1220,7 +1220,7 @@ ggsave(filename = "plots/exploratory/art_virus_host_amg.pdf",
 
 ``` r
 # Figure 1
-(ntwk.hab.vir.hq + a_hab_seq)/(ntwk.vir + e_tax)/(host_plot +
+(ntwk.vir + e_tax)/(ntwk.hab.vir.hq + a_hab_seq)/(host_plot +
     amg_general) + plot_annotation(tag_levels = "A")
 ```
 
@@ -1229,8 +1229,8 @@ ggsave(filename = "plots/exploratory/art_virus_host_amg.pdf",
 ``` r
 ggsave(filename = "plots/fig1.pdf", plot = last_plot(), device = "pdf",
     width = 14, height = 8, dpi = 300)
-# ggsave(filename = 'plots/fig1.png', plot = last_plot(),
-# device = 'png', width = 14, height = 8, dpi = 300)
+ggsave(filename = "plots/fig1.png", plot = last_plot(), device = "png",
+    width = 14, height = 8, dpi = 300)
 ```
 
 # Figure 2
@@ -1303,8 +1303,9 @@ site_bar_ra + coord_flip()
 ![](09_Antarctic_RMarkDown_files/figure-gfm/morephyloseq-1.png)<!-- -->
 
 ``` r
-ggsave(filename = "plots/art_virus_RA_ictv.png", plot = last_plot(),
-    device = "png", width = 6, height = 10, dpi = 300)
+ggsave(filename = "plots/exploratory/art_virus_RA_ictv.png",
+    plot = last_plot(), device = "png", width = 6, height = 10,
+    dpi = 300)
 ```
 
 # Beta Diversity

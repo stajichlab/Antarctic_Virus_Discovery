@@ -1059,10 +1059,10 @@ ggsave(filename = 'plots/exploratory/art_virus_host_amg.pdf', plot = last_plot()
 
 ```{r fig1_plot, fig.width=14, fig.height=8}
 # Figure 1
-( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) / (host_plot + amg_general) + plot_annotation(tag_levels = "A") 
+(ntwk.vir + e_tax ) / ( ntwk.hab.vir.hq + a_hab_seq ) / (host_plot + amg_general) + plot_annotation(tag_levels = "A") 
 
 ggsave(filename = 'plots/fig1.pdf', plot = last_plot(), device = 'pdf', width = 14, height = 8, dpi = 300)
-#ggsave(filename = 'plots/fig1.png', plot = last_plot(), device = 'png', width = 14, height = 8, dpi = 300)
+ggsave(filename = 'plots/fig1.png', plot = last_plot(), device = 'png', width = 14, height = 8, dpi = 300)
 ```
 
 # Figure 2
