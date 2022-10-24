@@ -1,7 +1,7 @@
 ## Github Repository for
-# Viral Diversity in Antarctica is Spatially Structured 
+# Antarctic rock viral catalog reveals high diversity and spatial structuring
 
-## by Cassie Ettinger,  Morgan Saunders, Jason Stajich, Claudia Coleine
+## by Cassie Ettinger, Morgan Saunders, Jason Stajich, Claudia Coleine et al.
 
 ### To cite this work or code
 
