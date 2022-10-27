@@ -282,7 +282,7 @@ genome.AV.tax <- genome.AV.tax %>%
   mutate(Family = ifelse(is.na(Family), "Unassigned", Family)) %>% 
   mutate(Genus = ifelse(is.na(Genus), "Unassigned", Genus))
 
-genome.AV.justtax <- genome.AV.tax[-c(2:17)]
+genome.AV.justtax <- genome.AV.tax[-c(2,4:17)]
 
 #vcontact2 also makes a network of protein similarity
 #it uses this to make VCs
@@ -535,7 +535,7 @@ checkv_cdhit_rep_tax <- left_join(checkv_cdhit_rep_tax, genome.AV.justtax.ictv)
 no.cov.vOTU.names <- tibble(no.cov.tax)
 no.cov.vOTU.names$`rownames(otu_tab)` <- no.cov.tax$Genome
 no.cov.vOTU.names$votu.id <- paste0("vOTU", 72915 + 1:nrow(no.cov.vOTU.names))
-no.cov.vOTU.names <- no.cov.vOTU.names[(9:10)]
+no.cov.vOTU.names <- no.cov.vOTU.names[(10:11)]
 
 vOTUs.ids.for.join <- full_join(vOTU.names, no.cov.vOTU.names)
 
@@ -1091,21 +1091,30 @@ df_ps.RA.filt <- psmelt(ps.RA)
 
 ## Site ## 
 
-grouped <- group_by(df_ps.RA.filt, Site.name...8, ClusterStatus, Phylum, Class, Order, Family, VCStatus, OTU)
+grouped <- group_by(df_ps.RA.filt, Site.name...8, ClusterStatus, Phylum, Class, Order, Family, VCStatus, VC.Status, OTU)
 
 avgs_grouped <- summarise(grouped, mean = 100 * mean(Abundance), 
                           sd = 100 * sd(Abundance))
 
 vOTU_avgs_grouped <- avgs_grouped
 
+
+vOTU_avgs_grouped <- left_join(vOTU_avgs_grouped, select(clstr.source, VC, ClstrComp), by=c("VCStatus" = "VC")) 
+
 vOTU_avgs_grouped <- vOTU_avgs_grouped %>% 
-  mutate(Family2 = ifelse(Family == "Unassigned", ifelse(ClusterStatus == "Clustered", "Unclassified", "Unclustered"), as.character(Family))) 
+  mutate(ClstrComp = ifelse(is.na(ClstrComp), "none", as.character(ClstrComp))) %>%
+  mutate(Family2 = ifelse(Family == "Mixed", "Unclassified", as.character(Family))) %>%
+  mutate(Family2 = ifelse(Family2 == "Unassigned", ifelse(ClusterStatus == "Clustered", "Unclassified", "Unclustered"), as.character(Family2))) %>%
+  mutate(Family3 = ifelse(Family == "Unassigned", ifelse(ClusterStatus == "Clustered", "Unclassified", as.character(VC.Status)), as.character(Family2))) %>%
+  mutate(Family3 = ifelse(str_detect(as.character(Family3), "Overlap"), "Overlap", as.character(Family3))) %>%
+  mutate(Family4 = ifelse(Family3 == "Unclassified", ifelse(ClstrComp == "AV", "Unique VC", as.character(Family3)), as.character(Family3)))
 
 
 vOTU_avgs_grouped$Site.name...8 <- factor(vOTU_avgs_grouped$Site.name...8, levels = c("Machu Picchu Base", "Dufayel Island", "Helliwell Hills", "Crater Circle", "Mt. Burrow", "Archambault Ridge", "Random Hills", "Kay Island", "Timber Peak", "Mt. New Zealand", "Mt. Dickason", "Mt. Nansen", "Mt. Keinath", "Anderson Ridge", "Vegetation Island", "Mt. Larsen",  "Inexpressible Island", "Mt. Billing", "Widowmaker Pass", "Trio Nunatak", "Unnamed Nunatak", "Harrow Peak", "Mt. McGee",  "Ricker Hills", "Mt. Bowen", "Pudding Butte", "Starr Nunatak", "Richard Nunatak", "Schultz Peak", "Battleship Promontory", "Convoy Range", "Mt. Elektra", "Siegfried Peak", "Linnaeus Terrace", "Finger Mt.", "University Valley", "Knobhead"))
 
+vOTU_avgs_grouped$Family4 <- factor(vOTU_avgs_grouped$Family4, levels = c("Helgolandviridae", "Inoviridae", "Myoviridae", "Podoviridae", "Schitoviridae", "Siphoviridae", "Unclassified", "Unique VC", "Overlap", "Outlier", "Singleton"))
 
-plot_s = ggplot(vOTU_avgs_grouped, aes(x = Site.name...8, y = (mean), fill = Family2)) + 
+plot_s = ggplot(vOTU_avgs_grouped, aes(x = Site.name...8, y = (mean), fill = Family4)) + 
   geom_bar(stat = "identity", position = "stack")
 
 site_bar_ra <- plot_s + theme_bw() +
@@ -1118,8 +1127,46 @@ site_bar_ra <- plot_s + theme_bw() +
 site_bar_ra + coord_flip()
 ggsave(filename = 'plots/exploratory/art_virus_RA_ictv.png', plot = last_plot(), device = 'png', width = 6, height = 10, dpi = 300)
 
+```
+
+```{r cross_site}
+
+#get number of vOTUs across three regions shared
+vOTU_avgs_grouped.shared <- vOTU_avgs_grouped %>%
+    left_join(select(meta, Site.name...8, AreaSample))%>%
+    filter(mean != "0") %>%
+    group_by(AreaSample, OTU) %>%
+    tally() %>%
+    group_by(OTU) %>%
+    summarize(n_uniq = length(unique(AreaSample))) 
+
+#found in one region
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq == "1"])
+
+#found in two regions
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq == "2"])
+
+#found in three regions
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq == "3"])
+
+
+#vOTUs across sites
+vOTU_avgs_grouped.shared.site <- vOTU_avgs_grouped %>%
+    filter(mean != "0") %>%
+    group_by(Site.name...8, OTU) %>%
+    tally() %>%
+    group_by(OTU) %>%
+    summarize(n_uniq = length(unique(Site.name...8))) 
+
+#found in only one site
+length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq == "1"])
+
+#found more than one site
+length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq > "1"])
+
 
 ```
+
 
 ```{r rock_plot, include=FALSE}
 ## Rock Type ##
@@ -1379,7 +1426,7 @@ site_flip <- site_bar_ra + coord_flip()
   plot_annotation(tag_levels = "A")
 
 ggsave(filename = 'plots/fig2.pdf', plot = last_plot(), device = 'pdf', width = 20, height = 10, dpi = 300)
-#ggsave(filename = 'plots/fig2.png', plot = last_plot(), device = 'png', width = 20, height = 10, dpi = 300)
+ggsave(filename = 'plots/fig2.png', plot = last_plot(), device = 'png', width = 20, height = 10, dpi = 300)
 
 
 #without map
@@ -1398,14 +1445,17 @@ write.csv(combo, 'results/vOTU_info.csv')
 
 #whole dataset
 
+combo2 <- combo %>%
+  filter(!is.na(votu.id))
+
 #total number of unique VCs
-length(unique(combo$VCStatus)) -1 #Unclustered
+length(unique(combo2$VCStatus)) -1 #Unclustered
 
 #total number of vOTUs
-length(unique(combo$votu.id))
+length(unique(combo2$votu.id))
 
 #total number of viral seqs
-length(unique(combo$Genome))
+length(unique(combo2$Genome))
 
 
 checkv_cdhit_tax.meta.samplesum <- combo %>%
@@ -1471,7 +1521,8 @@ write.csv(checkv_cdhit_tax.meta.samplesum.combo, 'results/sample_sum_info.csv')
 #filtered dataset
 combo.filt <- combo %>%
   filter(!checkv_quality %in% c("Not-determined")) %>%
-  filter(is.na(contig_length) | contig_length >= 10000)
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  filter(!is.na(votu.id))
 
 #total number of unique VCs
 length(unique(combo.filt$VCStatus)) -1 #Unclustered
@@ -1505,7 +1556,7 @@ number_check.filt <- combo.filt %>%
 
 checkv_cdhit_tax.meta.samplesum.combo.filt <- checkv_cdhit_tax.meta.samplesum.filt %>%
     left_join(dplyr::select(number_provirus.filt, SampleID, provirus_num)) %>%
-    left_join(number_check.filt[-c(6)]) %>%
+    left_join(number_check.filt) %>%
     left_join(dplyr::select(sampledata2, SampleID, AreaSample, Site.name...8, `Year of collection`,Rocks_v2, Latitude,  Longitude)) %>%
    replace(is.na(.), 0)
 

@@ -278,7 +278,7 @@ genome.AV.tax <- genome.AV.tax %>%
     mutate(Family = ifelse(is.na(Family), "Unassigned", Family)) %>%
     mutate(Genus = ifelse(is.na(Genus), "Unassigned", Genus))
 
-genome.AV.justtax <- genome.AV.tax[-c(2:17)]
+genome.AV.justtax <- genome.AV.tax[-c(2, 4:17)]
 
 # vcontact2 also makes a network of protein similarity it
 # uses this to make VCs we can use this to plot viruses and
@@ -556,7 +556,7 @@ checkv_cdhit_rep_tax <- left_join(checkv_cdhit_rep_tax, genome.AV.justtax.ictv)
 no.cov.vOTU.names <- tibble(no.cov.tax)
 no.cov.vOTU.names$`rownames(otu_tab)` <- no.cov.tax$Genome
 no.cov.vOTU.names$votu.id <- paste0("vOTU", 72915 + 1:nrow(no.cov.vOTU.names))
-no.cov.vOTU.names <- no.cov.vOTU.names[(9:10)]
+no.cov.vOTU.names <- no.cov.vOTU.names[(10:11)]
 
 vOTUs.ids.for.join <- full_join(vOTU.names, no.cov.vOTU.names)
 
@@ -867,10 +867,10 @@ sampledata <- vroom("data/metadata_all_samples.tsv")
 checkv_cdhit_tax <- vroom("results/processed_data/checkv_cdhit_results_with_tax_ictv.csv")
 ```
 
-    ## Rows: 101085 Columns: 35
+    ## Rows: 101085 Columns: 36
     ## ── Column specification ────────────────────────────────────────────────────────
     ## Delimiter: ","
-    ## chr (23): filename, contig_id, provirus, checkv_quality, miuvig_quality, com...
+    ## chr (24): filename, contig_id, provirus, checkv_quality, miuvig_quality, com...
     ## dbl (12): contig_length, proviral_length, gene_count, viral_genes, host_gene...
     ## 
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
@@ -919,8 +919,9 @@ clstrd.nodes <- nodes %>%
 genome.ov.AV <- left_join(genome.ov, checkv_cdhit_tax)
 ```
 
-    ## Joining, by = c("Genome", "Class", "Phylum", "ICTV_Genus", "ICTV_Family",
-    ## "ICTV_Order", "ICTV_Class", "ICTV_Phylum", "Order", "Family", "Genus")
+    ## Joining, by = c("Genome", "VC.Status", "Class", "Phylum", "ICTV_Genus",
+    ## "ICTV_Family", "ICTV_Order", "ICTV_Class", "ICTV_Phylum", "Order", "Family",
+    ## "Genus")
 
 ``` r
 # plot by fam - only VCs that clustered with reference data
@@ -954,8 +955,9 @@ vir.fam.nodes <- clstrd.nodes %>%
     filter(Source == "refseq" | ClstrComp == "both")
 ```
 
-    ## Joining, by = c("Genome", "Class", "Phylum", "ICTV_Genus", "ICTV_Family",
-    ## "ICTV_Order", "ICTV_Class", "ICTV_Phylum", "Order", "Family", "Genus")
+    ## Joining, by = c("Genome", "VC.Status", "Class", "Phylum", "ICTV_Genus",
+    ## "ICTV_Family", "ICTV_Order", "ICTV_Class", "ICTV_Phylum", "Order", "Family",
+    ## "Genus")
 
 ``` r
 # Plot
@@ -1262,16 +1264,30 @@ df_ps.RA.filt <- psmelt(ps.RA)
 ## Site ##
 
 grouped <- group_by(df_ps.RA.filt, Site.name...8, ClusterStatus,
-    Phylum, Class, Order, Family, VCStatus, OTU)
+    Phylum, Class, Order, Family, VCStatus, VC.Status, OTU)
 
 avgs_grouped <- summarise(grouped, mean = 100 * mean(Abundance),
     sd = 100 * sd(Abundance))
 
 vOTU_avgs_grouped <- avgs_grouped
 
+
+vOTU_avgs_grouped <- left_join(vOTU_avgs_grouped, select(clstr.source,
+    VC, ClstrComp), by = c(VCStatus = "VC"))
+
 vOTU_avgs_grouped <- vOTU_avgs_grouped %>%
-    mutate(Family2 = ifelse(Family == "Unassigned", ifelse(ClusterStatus ==
-        "Clustered", "Unclassified", "Unclustered"), as.character(Family)))
+    mutate(ClstrComp = ifelse(is.na(ClstrComp), "none", as.character(ClstrComp))) %>%
+    mutate(Family2 = ifelse(Family == "Mixed", "Unclassified",
+        as.character(Family))) %>%
+    mutate(Family2 = ifelse(Family2 == "Unassigned", ifelse(ClusterStatus ==
+        "Clustered", "Unclassified", "Unclustered"), as.character(Family2))) %>%
+    mutate(Family3 = ifelse(Family == "Unassigned", ifelse(ClusterStatus ==
+        "Clustered", "Unclassified", as.character(VC.Status)),
+        as.character(Family2))) %>%
+    mutate(Family3 = ifelse(str_detect(as.character(Family3),
+        "Overlap"), "Overlap", as.character(Family3))) %>%
+    mutate(Family4 = ifelse(Family3 == "Unclassified", ifelse(ClstrComp ==
+        "AV", "Unique VC", as.character(Family3)), as.character(Family3)))
 
 
 vOTU_avgs_grouped$Site.name...8 <- factor(vOTU_avgs_grouped$Site.name...8,
@@ -1287,9 +1303,13 @@ vOTU_avgs_grouped$Site.name...8 <- factor(vOTU_avgs_grouped$Site.name...8,
         "Mt. Elektra", "Siegfried Peak", "Linnaeus Terrace",
         "Finger Mt.", "University Valley", "Knobhead"))
 
+vOTU_avgs_grouped$Family4 <- factor(vOTU_avgs_grouped$Family4,
+    levels = c("Helgolandviridae", "Inoviridae", "Myoviridae",
+        "Podoviridae", "Schitoviridae", "Siphoviridae", "Unclassified",
+        "Unique VC", "Overlap", "Outlier", "Singleton"))
 
 plot_s = ggplot(vOTU_avgs_grouped, aes(x = Site.name...8, y = (mean),
-    fill = Family2)) + geom_bar(stat = "identity", position = "stack")
+    fill = Family4)) + geom_bar(stat = "identity", position = "stack")
 
 site_bar_ra <- plot_s + theme_bw() + theme(text = element_text(size = 14)) +
     ylab("Mean Relative Abundance") + xlab("") + guides(fill = guide_legend(title = "Family")) +
@@ -1307,6 +1327,67 @@ ggsave(filename = "plots/exploratory/art_virus_RA_ictv.png",
     plot = last_plot(), device = "png", width = 6, height = 10,
     dpi = 300)
 ```
+
+``` r
+# get number of vOTUs across three regions shared
+vOTU_avgs_grouped.shared <- vOTU_avgs_grouped %>%
+    left_join(select(meta, Site.name...8, AreaSample)) %>%
+    filter(mean != "0") %>%
+    group_by(AreaSample, OTU) %>%
+    tally() %>%
+    group_by(OTU) %>%
+    summarize(n_uniq = length(unique(AreaSample)))
+```
+
+    ## Joining, by = "Site.name...8"
+
+``` r
+# found in one region
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
+    "1"])
+```
+
+    ## [1] 7759
+
+``` r
+# found in two regions
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
+    "2"])
+```
+
+    ## [1] 3066
+
+``` r
+# found in three regions
+length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
+    "3"])
+```
+
+    ## [1] 159
+
+``` r
+# vOTUs across sites
+vOTU_avgs_grouped.shared.site <- vOTU_avgs_grouped %>%
+    filter(mean != "0") %>%
+    group_by(Site.name...8, OTU) %>%
+    tally() %>%
+    group_by(OTU) %>%
+    summarize(n_uniq = length(unique(Site.name...8)))
+
+# found in only one site
+length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq ==
+    "1"])
+```
+
+    ## [1] 6485
+
+``` r
+# found more than one site
+length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq >
+    "1"])
+```
+
+    ## [1] 4499
 
 # Beta Diversity
 
@@ -2134,10 +2215,19 @@ ggsave(filename = "plots/fig2.pdf", plot = last_plot(), device = "pdf",
     ## `geom_smooth()` using formula 'y ~ x'
 
 ``` r
-# ggsave(filename = 'plots/fig2.png', plot = last_plot(),
-# device = 'png', width = 20, height = 10, dpi = 300)
+ggsave(filename = "plots/fig2.png", plot = last_plot(), device = "png",
+    width = 20, height = 10, dpi = 300)
+```
 
+    ## Warning: Duplicated override.aes is ignored.
 
+    ## Don't know how to automatically pick scale for object of type dist. Defaulting to continuous.
+
+    ## Don't know how to automatically pick scale for object of type dist. Defaulting to continuous.
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+``` r
 # without map (site_flip + ( site_pcoa / dist_hell )) +
 # plot_annotation(tag_levels = 'A') + plot_layout(guides =
 # 'collect')
@@ -2151,25 +2241,28 @@ write.csv(combo, "results/vOTU_info.csv")
 
 # whole dataset
 
+combo2 <- combo %>%
+    filter(!is.na(votu.id))
+
 # total number of unique VCs
-length(unique(combo$VCStatus)) - 1  #Unclustered
+length(unique(combo2$VCStatus)) - 1  #Unclustered
 ```
 
-    ## [1] 10625
+    ## [1] 10624
 
 ``` r
 # total number of vOTUs
-length(unique(combo$votu.id))
+length(unique(combo2$votu.id))
 ```
 
-    ## [1] 76985
+    ## [1] 76984
 
 ``` r
 # total number of viral seqs
-length(unique(combo$Genome))
+length(unique(combo2$Genome))
 ```
 
-    ## [1] 101086
+    ## [1] 101085
 
 ``` r
 checkv_cdhit_tax.meta.samplesum <- combo %>%
@@ -2280,27 +2373,28 @@ write.csv(checkv_cdhit_tax.meta.samplesum.combo, "results/sample_sum_info.csv")
 # filtered dataset
 combo.filt <- combo %>%
     filter(!checkv_quality %in% c("Not-determined")) %>%
-    filter(is.na(contig_length) | contig_length >= 10000)
+    filter(is.na(contig_length) | contig_length >= 10000) %>%
+    filter(!is.na(votu.id))
 
 # total number of unique VCs
 length(unique(combo.filt$VCStatus)) - 1  #Unclustered
 ```
 
-    ## [1] 2852
+    ## [1] 2851
 
 ``` r
 # total number of vOTUs
 length(unique(combo.filt$votu.id))
 ```
 
-    ## [1] 11807
+    ## [1] 11806
 
 ``` r
 # total number of viral seqs
 length(unique(combo.filt$Genome))
 ```
 
-    ## [1] 14797
+    ## [1] 14796
 
 ``` r
 checkv_cdhit_tax.meta.samplesum.filt <- combo.filt %>%
@@ -2324,7 +2418,7 @@ number_check.filt <- combo.filt %>%
 
 checkv_cdhit_tax.meta.samplesum.combo.filt <- checkv_cdhit_tax.meta.samplesum.filt %>%
     left_join(dplyr::select(number_provirus.filt, SampleID, provirus_num)) %>%
-    left_join(number_check.filt[-c(6)]) %>%
+    left_join(number_check.filt) %>%
     left_join(dplyr::select(sampledata2, SampleID, AreaSample,
         Site.name...8, `Year of collection`, Rocks_v2, Latitude,
         Longitude)) %>%
@@ -2341,7 +2435,7 @@ summary(checkv_cdhit_tax.meta.samplesum.combo.filt$contig_length_avg)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##       0   20171   22150   21781   24108   43442
+    ##   13297   20293   22208   22610   24234   43442
 
 ``` r
 # avg gene count per seq
@@ -2349,7 +2443,7 @@ summary(checkv_cdhit_tax.meta.samplesum.combo.filt$gene_count_avg)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##    0.00   25.24   27.60   27.06   30.12   42.78
+    ##   18.21   25.52   27.71   28.09   30.25   42.78
 
 ``` r
 # avg number viral seq
@@ -2357,7 +2451,7 @@ summary(checkv_cdhit_tax.meta.samplesum.combo.filt$num_seqs)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##    0.00   36.00   64.00   77.47  110.50  250.00
+    ##    4.00   39.00   66.50   80.41  111.00  250.00
 
 ``` r
 # total number of viral seq
@@ -2372,7 +2466,7 @@ summary(checkv_cdhit_tax.meta.samplesum.combo.filt$provirus_num)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##    0.00    5.00   10.00   14.11   19.00   68.00
+    ##    0.00    5.75   11.00   14.65   19.00   68.00
 
 ``` r
 # total number of provirus
