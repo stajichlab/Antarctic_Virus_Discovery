@@ -845,6 +845,149 @@ host.filt.taxa.top1 <- host.filt.top5.taxa %>%
 host.gen.tax <- readRDS("results/processed_data/host.gen.tax.RDS")
 ```
 
+``` r
+# load in host prediction from blast
+host.mag <- vroom("data/mag_host_prediction/antmag.blastn.tab",
+    col_names = c("qseqid", "sseqid", "pident", "bitscore", "evalue",
+        "length", "sgi", "sacc", "sallseqid", "staxids", "sscinames",
+        "stitle"))
+```
+
+    ## Rows: 4141021 Columns: 12
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: "\t"
+    ## chr (6): qseqid, sseqid, sacc, sallseqid, sscinames, stitle
+    ## dbl (6): pident, bitscore, evalue, length, sgi, staxids
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+host.mag.tax <- vroom("data/mag_host_prediction/Taxonomy_summary.csv")
+```
+
+    ## New names:
+    ## • `` -> `...8`
+
+    ## Warning: One or more parsing issues, call `problems()` on your data frame for details,
+    ## e.g.:
+    ##   dat <- vroom(...)
+    ##   problems(dat)
+
+    ## Rows: 2278 Columns: 8
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (7): user_genome, Phylum, Class, Order, Family, Genus, Species
+    ## lgl (1): ...8
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+host.mag.tax <- host.mag.tax[-c(8)]
+
+# there are some length / coverage and score requirements
+# for a host prediction to be made setting requirements
+# length of alignment
+minlen = 2000
+minpercid = 70
+minbit = 50
+mine = 0.001  #we set evalue at 1e-25 so not an issue here, they all should be lower than this
+
+# now filter host pred results by the above reqs
+host.mag.filt <- host.mag[which(host.mag$bitscore >= minbit),
+    ]
+host.mag.filt <- host.mag.filt[which(host.mag.filt$length >=
+    minlen), ]
+host.mag.filt <- host.mag.filt[which(host.mag.filt$pident >=
+    minpercid), ]
+
+# take the dataframe & group it by the grouping variable
+# (query genome) and take the top five hits
+host.mag.filt.top5 <- host.mag.filt %>%
+    group_by(qseqid) %>%
+    slice(1:5)
+
+
+# note this is imperfect at 'species' level, seems OK at
+# some higher levels, BLAST should also be accurate to
+# genus level anyway so should not be an issue for most
+# host predictions
+
+# fix names of different levels with NAs
+host.mag.tax[is.na(host.mag.tax)] <- "Unclassified"
+
+host.mag.tax <- host.mag.tax %>%
+    mutate(user_genome = str_remove(user_genome, ".fa"))
+
+host.mag.filt.top5 <- host.mag.filt.top5 %>%
+    mutate_at("sacc", str_replace, "_NODE.*", "") %>%
+    mutate_at("sacc", str_replace, "_scaff.*", "")
+
+host.mag.filt.top5.taxa <- left_join(host.mag.filt.top5, host.mag.tax,
+    by = c(sacc = "user_genome"))
+
+# collect how many different taxonomic groups in the top 5
+# hits per each viral genome
+host.mag.filt.top5.taxa.info <- host.mag.filt.top5.taxa %>%
+    summarise(Pd = n_distinct(Phylum), Cd = n_distinct(Class),
+        Od = n_distinct(Order), Fd = n_distinct(Family), Gd = n_distinct(Genus),
+        Sd = n_distinct(Species))
+
+# make a new df
+virus.names.mag <- unique(host.mag.filt.top5.taxa.info$qseqid)
+host.gen.mag <- as.data.frame(virus.names.mag)
+rm(virus.names.mag)
+
+# take the dataframe & group it by the grouping variable
+# (genome) take only the top hit now
+host.mag.filt.taxa.top1 <- host.mag.filt.top5.taxa %>%
+    group_by(qseqid) %>%
+    slice(1)
+
+# if only one taxonomic classification at each level in
+# host.filt.top5.taxa.info, then we take the phylum of the
+# top hit from host.filt.taxa.top1, otherwise we assign it
+# as 'Mixed' #tomeaning that multiple taxonomic groupings
+# were matches at that level for that genome
+# host.gen.tax.mag <- host.gen.mag %>% mutate(Phylum =
+# ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
+# == virus.names,]$Pd == 1,
+# host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
+# virus.names,]$Phylum, 'Mixed')) %>% mutate(Class =
+# ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
+# == virus.names,]$Cd == 1,
+# host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
+# virus.names,]$Class, 'Mixed')) %>% mutate(Order =
+# ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
+# == virus.names,]$Od == 1,
+# host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
+# virus.names,]$Order, 'Mixed')) %>% mutate(Family =
+# ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
+# == virus.names,]$Fd == 1,
+# host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
+# virus.names,]$Family, 'Mixed')) %>% mutate(Genus =
+# ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
+# == virus.names,]$Gd == 1,
+# host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
+# virus.names,]$Genus, 'Mixed'))
+
+# remove Mars-44.bin.73
+
+# saveRDS(host.gen.tax.mag,
+# 'results/processed_data/host.gen.tax.mag.RDS')
+# write_csv(host.gen.tax.mag,
+# 'results/processed_data/viral.host.taxonomy.mag.csv')
+
+host.gen.tax.mag <- readRDS("results/processed_data/host.gen.tax.mag.RDS")
+
+host.gen.tax.mag <- left_join(host.gen.tax.mag, select(host.mag.filt.taxa.top1,
+    qseqid, sacc), by = c(virus.names.mag = "qseqid"))
+
+host.gen.tax.mag <- host.gen.tax.mag[host.gen.tax.mag$sacc !=
+    "Mars-44.bin.73", ]
+```
+
 # Networks
 
 ``` r
@@ -1205,24 +1348,205 @@ amg_general <- ggplot(amg.plotdata, aes(x = category, fill = category,
     width = 0.6) + coord_flip() + scale_fill_viridis_d(option = "G",
     direction = -1) + ylab("Number of auxillary metabolic genes") +
     xlab("") + theme(legend.position = "none") + scale_x_discrete(limits = rev)
-
-
-host_plot + amg_general + plot_annotation(tag_levels = "A")
 ```
 
-![](09_Antarctic_RMarkDown_files/figure-gfm/fig2-1.png)<!-- -->
+``` r
+## Host MAG ##
+
+# join and rename
+host.vots.mag <- left_join(host.gen.tax.mag, vOTU.names, by = c(virus.names.mag = "rownames(otu_tab)"))
+host.vots.mag <- host.vots.mag[-c(1)]
+host.vots.mag$MAGHostPhylum <- host.vots.mag$Phylum
+host.vots.mag$MAGHostClass <- host.vots.mag$Class
+host.vots.mag$MAGHostOrder <- host.vots.mag$Order
+host.vots.mag$MAGHostFamily <- host.vots.mag$Family
+host.vots.mag$MAGHostGenus <- host.vots.mag$Genus
+host.vots.mag$MAGHostBin <- host.vots.mag$sacc
+
+host.vots.mag <- host.vots.mag[-c(1:6)]
+
+
+host.gen.tax.mag.meta <- left_join(combo, host.vots.mag, by = c(votu.id = "votu.id"))
+
+# fix labels
+host.gen.tax.mag.meta <- host.gen.tax.mag.meta %>%
+    mutate(MAGHostPhylum = fct_explicit_na(MAGHostPhylum, na_level = "No host prediction"),
+        MAGHostClass = fct_explicit_na(MAGHostClass, na_level = "No host prediction"),
+        MAGHostOrder = fct_explicit_na(MAGHostOrder, na_level = "No host prediction"),
+        MAGHostFamily = fct_explicit_na(MAGHostFamily, na_level = "No host prediction"),
+        MAGHostGenus = fct_explicit_na(MAGHostGenus, na_level = "No host prediction"),
+        MAGHostBin = fct_explicit_na(MAGHostBin, na_level = "No host prediction")) %>%
+    mutate(MAGHostPhylum = ifelse(MAGHostPhylum == "Mixed", "No host prediction",
+        as.character(MAGHostPhylum)), MAGHostClass = ifelse(MAGHostClass ==
+        "Mixed", "No host prediction", as.character(MAGHostClass)),
+        MAGHostOrder = ifelse(MAGHostOrder == "Mixed", "No host prediction",
+            as.character(MAGHostOrder)), MAGHostFamily = ifelse(MAGHostFamily ==
+            "Mixed", "No host prediction", as.character(MAGHostFamily)),
+        MAGHostGenus = ifelse(MAGHostGenus == "Mixed", "No host prediction",
+            as.character(MAGHostGenus)))
+
+host.gen.tax.mag.meta.high <- host.gen.tax.mag.meta %>%
+    filter(!checkv_quality %in% c("Not-determined")) %>%
+    filter(contig_length >= 10000)
+
+# summarize data
+host.gen.tax.mag.meta.high.plotdata <- host.gen.tax.mag.meta.high %>%
+    filter(MAGHostPhylum != "No host prediction") %>%
+    group_by(MAGHostPhylum) %>%
+    tally() %>%
+    arrange(desc(n)) %>%
+    group_by(MAGHostPhylum) %>%
+    mutate(n2 = sum(n)) %>%
+    mutate(lab_ypos = n2 + 3)
+
+
+host_mag_plot <- ggplot(host.gen.tax.mag.meta.high.plotdata,
+    aes(x = MAGHostPhylum, fill = MAGHostPhylum, y = n)) + theme_bw() +
+    geom_bar(stat = "identity", position = "stack", width = 0.6) +
+    scale_fill_viridis_d(option = "B") + ylab("Number of viral sequences") +
+    xlab("") + theme(legend.position = "none") + coord_flip() +
+    scale_x_discrete(limits = rev)  #+
+# geom_text(aes(y = lab_ypos,label = n2, group =
+# HostPhylum), fontface = 'bold', size = 4, color =
+# 'black')
+
+host_mag_plot
+```
+
+![](09_Antarctic_RMarkDown_files/figure-gfm/maghost_plot-1.png)<!-- -->
 
 ``` r
-ggsave(filename = "plots/exploratory/art_virus_host_amg.pdf",
-    plot = last_plot(), device = "pdf", width = 10, height = 6,
-    dpi = 300)
+host.gen.tax.mag.meta.high.plotdata$DB <- "(A) MAG-based prediction"
+host.gen.tax.mag.meta.high.plotdata$HostPhylum <- host.gen.tax.mag.meta.high.plotdata$MAGHostPhylum
+host.gen.tax.meta.plotdata$DB <- "(B) RefSeq-based prediction"
+
+host.plotdata <- full_join(host.gen.tax.meta.plotdata, host.gen.tax.mag.meta.high.plotdata[-c(1)])
+```
+
+    ## Joining, by = c("HostPhylum", "n", "n2", "lab_ypos", "DB")
+
+``` r
+host.plotdata <- host.plotdata %>%
+    mutate(HostPhylum = ifelse(HostPhylum == "Actinobacteria",
+        "Actinobacteriota", as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+        "Bacteroidetes", "Bacteroidota", as.character(HostPhylum)),
+        HostPhylum = ifelse(HostPhylum == "Planctomycetes", "Planctomycetota",
+            as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+            "Acidobacteria", "Acidobacteriota", as.character(HostPhylum)),
+        HostPhylum = ifelse(HostPhylum == "Chloroflexi", "Chloroflexota",
+            as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+            "Deinococcus-Thermus", "Deinococcota", as.character(HostPhylum)))
+
+ggplot(host.plotdata, aes(x = HostPhylum, fill = HostPhylum,
+    y = n)) + theme_bw() + facet_wrap(~DB) + geom_bar(stat = "identity",
+    position = "stack", width = 0.6) + scale_fill_viridis_d(option = "B") +
+    ylab("Number of viral sequences") + xlab("") + theme(legend.position = "none") +
+    coord_flip() + scale_x_discrete(limits = rev)
+```
+
+![](09_Antarctic_RMarkDown_files/figure-gfm/combo_supp_mag-1.png)<!-- -->
+
+``` r
+ggsave(filename = "plots/figs1.pdf", plot = last_plot(), device = "pdf",
+    width = 6, height = 4, dpi = 300)
+ggsave(filename = "plots/figs1.png", plot = last_plot(), device = "png",
+    width = 6, height = 4, dpi = 300)
+```
+
+``` r
+# host vs ncbi
+
+host.combo <- full_join(host.gen.tax.meta.high, host.gen.tax.mag.meta.high)
+```
+
+    ## Joining, by = c("num", "SampleID", "Sample_name", "Sample_name2",
+    ## "Sample_name3", "Sequencing", "Site.name...7", "Site.name...8", "Sample",
+    ## "AreaSample", "Type of rocks", "Rocks_v2", "Latitude", "Longitude", "Sun
+    ## exposure", "Elevation (m asl)", "Sea distance (km)", "OriginalYear",
+    ## "Continent", "Fossil", "Year of collection", "contig_id", "contig_length",
+    ## "provirus", "proviral_length", "gene_count", "viral_genes", "host_genes",
+    ## "checkv_quality", "miuvig_quality", "completeness", "completeness_method",
+    ## "contamination", "kmer_freq", "warnings", "Genome", "clstr", "clstr_size",
+    ## "length", "clstr_rep", "clstr_iden", "clstr_cov", "VC.Status", "Phylum",
+    ## "Class", "Order", "Family", "Genus", "ClusterStatus", "VCStatus",
+    ## "ICTV_Phylum", "ICTV_Class", "ICTV_Order", "ICTV_Family", "ICTV_Genus",
+    ## "votu.id")
+
+``` r
+host.combo <- host.combo %>%
+    mutate(MAGvNCBI = ifelse(HostPhylum == "No host prediction" &
+        MAGHostPhylum == "No host prediction", "No host prediction",
+        ifelse(HostPhylum != "No host prediction" & MAGHostPhylum !=
+            "No host prediction", "NCBI and MAG based prediction",
+            ifelse(MAGHostPhylum != "No host prediction", "MAG-based prediction",
+                "NCBI-based prediction"))))
+
+# mag based methods should be superior to NCBI methods
+summary(as.factor(host.combo$MAGvNCBI))
+```
+
+    ##          MAG-based prediction NCBI and MAG based prediction 
+    ##                          5668                           968 
+    ##         NCBI-based prediction            No host prediction 
+    ##                           139                          8021
+
+``` r
+host.combo <- host.combo %>%
+    mutate(HostPhylum = ifelse(HostPhylum == "Actinobacteria",
+        "Actinobacteriota", as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+        "Bacteroidetes", "Bacteroidota", as.character(HostPhylum)),
+        HostPhylum = ifelse(HostPhylum == "Planctomycetes", "Planctomycetota",
+            as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+            "Acidobacteria", "Acidobacteriota", as.character(HostPhylum)),
+        HostPhylum = ifelse(HostPhylum == "Chloroflexi", "Chloroflexota",
+            as.character(HostPhylum)), HostPhylum = ifelse(HostPhylum ==
+            "Deinococcus-Thermus", "Deinococcota", as.character(HostPhylum)))
+
+host.combo <- host.combo %>%
+    mutate(ComboPhylum = ifelse(MAGvNCBI == "MAG-based prediction",
+        as.character(MAGHostPhylum), ifelse(MAGvNCBI == "NCBI-based prediction",
+            as.character(HostPhylum), ifelse(MAGvNCBI == "NCBI and MAG based prediction",
+                ifelse(HostPhylum == MAGHostPhylum, MAGHostPhylum,
+                  "Mixed"), as.character(MAGvNCBI)))), ComboPhylum_MAG = ifelse(MAGvNCBI ==
+        "MAG-based prediction", as.character(MAGHostPhylum),
+        ifelse(MAGvNCBI == "NCBI-based prediction", as.character(HostPhylum),
+            ifelse(MAGvNCBI == "NCBI and MAG based prediction",
+                as.character(MAGHostPhylum), as.character(MAGvNCBI)))))
+
+
+host.combo.plotdata <- host.combo %>%
+    filter(ComboPhylum_MAG != "No host prediction") %>%
+    group_by(ComboPhylum_MAG) %>%
+    tally() %>%
+    arrange(desc(n)) %>%
+    group_by(ComboPhylum_MAG) %>%
+    mutate(n2 = sum(n)) %>%
+    mutate(lab_ypos = n2 + 3)
+
+ComboPhylum_MAG_plot <- ggplot(host.combo.plotdata, aes(x = ComboPhylum_MAG,
+    fill = ComboPhylum_MAG, y = n)) + theme_bw() + geom_bar(stat = "identity",
+    position = "stack", width = 0.6) + scale_fill_viridis_d(option = "B") +
+    ylab("Number of viral sequences") + xlab("") + theme(legend.position = "none") +
+    coord_flip() + scale_x_discrete(limits = rev)  #+
+# geom_text(aes(y = lab_ypos,label = n2, group =
+# HostPhylum), fontface = 'bold', size = 4, color =
+# 'black')
+
+ComboPhylum_MAG_plot
+```
+
+![](09_Antarctic_RMarkDown_files/figure-gfm/hostvncbi-1.png)<!-- -->
+
+``` r
+ggsave(filename = "plots/exploratory/host_combo_mag.pdf", plot = last_plot(),
+    device = "pdf", width = 6, height = 6, dpi = 300)
 ```
 
 # Combined Fig 1
 
 ``` r
 # Figure 1
-(ntwk.vir + e_tax)/(ntwk.hab.vir.hq + a_hab_seq)/(host_plot +
+(ntwk.vir + e_tax)/(ntwk.hab.vir.hq + a_hab_seq)/(ComboPhylum_MAG_plot +
     amg_general) + plot_annotation(tag_levels = "A")
 ```
 
@@ -1364,6 +1688,70 @@ length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
 ```
 
     ## [1] 159
+
+``` r
+vOTU.3region.info <- combo[combo$votu.id %in% vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
+    "3"], ]
+
+vOTU.3region.info <- vOTU.3region.info %>%
+    left_join(select(clstr.source, VC, ClstrComp), by = c(VCStatus = "VC")) %>%
+    mutate(ClstrComp = ifelse(is.na(ClstrComp), "none", as.character(ClstrComp))) %>%
+    mutate(Family2 = ifelse(Family == "Mixed", "Unclassified",
+        as.character(Family))) %>%
+    mutate(Family2 = ifelse(Family2 == "Unassigned", ifelse(VC.Status ==
+        "Clustered", "Unclassified", as.character(VC.Status)),
+        as.character(Family2))) %>%
+    mutate(Family2 = ifelse(str_detect(as.character(Family2),
+        "Overlap"), "Overlap", as.character(Family2))) %>%
+    mutate(Family2 = ifelse(Family2 == "Unclassified", ifelse(ClstrComp ==
+        "AV", "Unique VC", as.character(Family2)), as.character(Family2))) %>%
+    left_join(select(host.gen.tax.meta, Genome, HostPhylum, HostClass,
+        HostOrder, HostFamily, HostGenus))
+```
+
+    ## Joining, by = "Genome"
+
+``` r
+# VC status of overlapping sequences
+summary(as.factor(vOTU.3region.info$Family2))
+```
+
+    ## Clustered/Singleton             Outlier             Overlap           Singleton 
+    ##                   4                  24                 123                  19 
+    ##           Unique VC 
+    ##                 228
+
+``` r
+# VC status, for vOTUs
+summary(as.factor(vOTU.3region.info$Family2[vOTU.3region.info$clstr_rep ==
+    1]))
+```
+
+    ## Clustered/Singleton             Outlier             Overlap           Singleton 
+    ##                   2                  16                  21                  14 
+    ##           Unique VC 
+    ##                 106
+
+``` r
+# Hosts status of overlapping sequences
+summary(as.factor(vOTU.3region.info$HostPhylum))
+```
+
+    ##       Acidobacteria      Actinobacteria       Bacteroidetes Deinococcus-Thermus 
+    ##                   5                  16                   3                   1 
+    ##  No host prediction      Proteobacteria 
+    ##                 259                 114
+
+``` r
+# Host phyla, vOTUs
+summary(as.factor(vOTU.3region.info$HostPhylum[vOTU.3region.info$clstr_rep ==
+    1]))
+```
+
+    ##       Acidobacteria      Actinobacteria       Bacteroidetes Deinococcus-Thermus 
+    ##                   2                   6                   2                   1 
+    ##  No host prediction      Proteobacteria 
+    ##                  97                  51
 
 ``` r
 # vOTUs across sites
