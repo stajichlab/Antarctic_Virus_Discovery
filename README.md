@@ -1,5 +1,5 @@
 ## Github Repository for
-# Antarctic rock viral catalog reveals high diversity and spatial structuring
+# Antarctic rocks are governed by highly diverse and unknown viruses 
 
 ## by Cassie Ettinger, Morgan Saunders, Jason Stajich, Claudia Coleine et al.
 
