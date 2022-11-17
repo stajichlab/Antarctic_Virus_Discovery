@@ -7,6 +7,7 @@ Cassie Ettinger
 ``` r
 library(GGally)
 library(tidyverse)
+library(scales)
 library(network)
 library(vroom)
 library(phyloseq)
@@ -863,6 +864,26 @@ host.mag <- vroom("data/mag_host_prediction/antmag.blastn.tab",
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ``` r
+host.mag.db.contig.leng <- vroom("data/mag_host_prediction/Antartica_MAGs_contig_len.txt",
+    col_names = c("sseqid", "contig_length"))
+```
+
+    ## Rows: 525713 Columns: 2
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: "\t"
+    ## chr (1): sseqid
+    ## dbl (1): contig_length
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+host.mag <- left_join(host.mag, host.mag.db.contig.leng)
+```
+
+    ## Joining, by = "sseqid"
+
+``` r
 host.mag.tax <- vroom("data/mag_host_prediction/Taxonomy_summary.csv")
 ```
 
@@ -893,6 +914,7 @@ minlen = 2000
 minpercid = 70
 minbit = 50
 mine = 0.001  #we set evalue at 1e-25 so not an issue here, they all should be lower than this
+host_contig_length = 50  #viral sequence cannot be more than 50% of total host MAG contig length, prevents matching small viral contigs
 
 # now filter host pred results by the above reqs
 host.mag.filt <- host.mag[which(host.mag$bitscore >= minbit),
@@ -901,6 +923,11 @@ host.mag.filt <- host.mag.filt[which(host.mag.filt$length >=
     minlen), ]
 host.mag.filt <- host.mag.filt[which(host.mag.filt$pident >=
     minpercid), ]
+
+host.mag.filt <- host.mag.filt %>%
+    mutate(host_contig_perc = 100 * (1 - (contig_length - length)/contig_length)) %>%
+    filter(host_contig_perc > 50)
+
 
 # take the dataframe & group it by the grouping variable
 # (query genome) and take the top five hits
@@ -950,27 +977,28 @@ host.mag.filt.taxa.top1 <- host.mag.filt.top5.taxa %>%
 # top hit from host.filt.taxa.top1, otherwise we assign it
 # as 'Mixed' #tomeaning that multiple taxonomic groupings
 # were matches at that level for that genome
+
 # host.gen.tax.mag <- host.gen.mag %>% mutate(Phylum =
 # ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
-# == virus.names,]$Pd == 1,
+# == virus.names.mag,]$Pd == 1,
 # host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
-# virus.names,]$Phylum, 'Mixed')) %>% mutate(Class =
+# virus.names.mag,]$Phylum, 'Mixed')) %>% mutate(Class =
 # ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
-# == virus.names,]$Cd == 1,
+# == virus.names.mag,]$Cd == 1,
 # host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
-# virus.names,]$Class, 'Mixed')) %>% mutate(Order =
+# virus.names.mag,]$Class, 'Mixed')) %>% mutate(Order =
 # ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
-# == virus.names,]$Od == 1,
+# == virus.names.mag,]$Od == 1,
 # host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
-# virus.names,]$Order, 'Mixed')) %>% mutate(Family =
+# virus.names.mag,]$Order, 'Mixed')) %>% mutate(Family =
 # ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
-# == virus.names,]$Fd == 1,
+# == virus.names.mag,]$Fd == 1,
 # host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
-# virus.names,]$Family, 'Mixed')) %>% mutate(Genus =
+# virus.names.mag,]$Family, 'Mixed')) %>% mutate(Genus =
 # ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid
-# == virus.names,]$Gd == 1,
+# == virus.names.mag,]$Gd == 1,
 # host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid ==
-# virus.names,]$Genus, 'Mixed'))
+# virus.names.mag,]$Genus, 'Mixed'))
 
 # remove Mars-44.bin.73
 
@@ -988,7 +1016,7 @@ host.gen.tax.mag <- host.gen.tax.mag[host.gen.tax.mag$sacc !=
     "Mars-44.bin.73", ]
 ```
 
-# Networks
+# Removing NCLDVs from Vcontact2 results
 
 ``` r
 # load in files using vroom
@@ -1052,6 +1080,77 @@ sampledata2 <- sampledata %>%
 # plot
 combo <- full_join(sampledata2, checkv_cdhit_tax2, by = c(SampleID = "filename"))
 
+
+
+virsort_values <- left_join(combo, VS_data_un) %>%
+    filter(!checkv_quality %in% c("Not-determined")) %>%
+    filter(is.na(contig_length) | contig_length >= 10000) %>%
+    filter(!is.na(votu.id))
+```
+
+    ## Joining, by = c("Genome", "length")
+
+``` r
+# get number of sequences per score group
+summary(as.factor(virsort_values$max_score_group))
+```
+
+    ##    dsDNAphage lavidaviridae         NCLDV           RNA         ssDNA 
+    ##         11305           491          2279             5             2 
+    ##          NA's 
+    ##           714
+
+``` r
+# get number of vOTUs per score group
+summary(as.factor(virsort_values$max_score_group[virsort_values$clstr_rep ==
+    1]))
+```
+
+    ##    dsDNAphage lavidaviridae         NCLDV           RNA         ssDNA 
+    ##          9099           319          1755             4             1 
+    ##          NA's 
+    ##           568
+
+``` r
+# get summary of max virsorter score group based on
+# majority VC membership
+virsort_get_VC_scores <- virsort_values %>%
+    filter(VCStatus != "Unclustered") %>%
+    group_by(VCStatus, max_score_group) %>%
+    tally() %>%
+    group_by(VCStatus) %>%
+    slice(1) %>%
+    select(-n) %>%
+    group_by(max_score_group) %>%
+    tally()
+
+# number NCLDV VCs to remove from filt
+filt_NCLDV <- virsort_get_VC_scores$n[virsort_get_VC_scores$max_score_group ==
+    "NCLDV"]
+
+virsort_values_unref_set <- left_join(combo, VS_data_un) %>%
+    filter(!is.na(votu.id)) %>%
+    filter(VCStatus != "Unclustered") %>%
+    group_by(VCStatus, max_score_group) %>%
+    tally() %>%
+    group_by(VCStatus) %>%
+    slice(1) %>%
+    select(-n) %>%
+    group_by(max_score_group) %>%
+    tally()
+```
+
+    ## Joining, by = c("Genome", "length")
+
+``` r
+# number to remove from total
+tot_NCLDV <- virsort_values_unref_set$n[virsort_values_unref_set$max_score_group ==
+    "NCLDV"]
+```
+
+# Networks
+
+``` r
 # these take a while to load the images
 
 clstrd.nodes <- nodes %>%
@@ -1078,6 +1177,8 @@ vir.fam.clust <- genome.ov %>%
         by = c(VC = "VCStatus")) %>%
     filter(!checkv_quality %in% c("Not-determined")) %>%
     filter(is.na(contig_length) | contig_length >= 10000) %>%
+    left_join(select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!max_score_group %in% c("NCLDV")) %>%
     group_by(Order, Family) %>%
     count() %>%
     group_by(Order) %>%
@@ -1085,12 +1186,18 @@ vir.fam.clust <- genome.ov %>%
     arrange(nOrd, n) %>%
     ungroup() %>%
     mutate(Rank = 1:n())
+```
 
+    ## Joining, by = "Genome"
+
+``` r
 vir.fam.nodes <- clstrd.nodes %>%
     left_join(select(clstr.master, VC, ClstrComp), by = "VC") %>%
     left_join(combo) %>%
     filter(!checkv_quality %in% c("Not-determined")) %>%
     filter(is.na(contig_length) | contig_length >= 10000) %>%
+    left_join(select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!max_score_group %in% c("NCLDV")) %>%
     mutate(Family2 = case_when(Source == "AV" ~ "This Study",
         Family %in% vir.fam.clust$Family ~ as.character(Family),
         TRUE ~ "Other")) %>%
@@ -1101,6 +1208,7 @@ vir.fam.nodes <- clstrd.nodes %>%
     ## Joining, by = c("Genome", "VC.Status", "Class", "Phylum", "ICTV_Genus",
     ## "ICTV_Family", "ICTV_Order", "ICTV_Class", "ICTV_Phylum", "Order", "Family",
     ## "Genus")
+    ## Joining, by = "Genome"
 
 ``` r
 # Plot
@@ -1130,22 +1238,29 @@ vir.hab.nodes <- clstrd.nodes %>%
         VCStatus), by = c(VC = "VCStatus")) %>%
     filter(!checkv_quality %in% c("Not-determined")) %>%
     filter(is.na(contig_length) | contig_length >= 10000) %>%
+    left_join(select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!max_score_group %in% c("NCLDV")) %>%
     mutate(Rocks_v2 = ifelse(is.na(Rocks_v2), "Unknown", as.character(Rocks_v2)))  #%>%
+```
+
+    ## Joining, by = "Genome"
+
+``` r
 # filter(Source == 'refseq' | ClstrComp == 'both')
 
-vir.hab.nodes <- vir.hab.nodes[-c(66:67)]
+vir.hab.nodes <- vir.hab.nodes[-c(66:67, 69)]
 
 
 # Plot
 ntwk.hab.vir.hq <- vir.hab.nodes %>%
     ggplot(aes(x, y)) + geom_line(data = filter(edges, Genome %in%
     vir.hab.nodes$Genome), aes(group = Pair), alpha = 0.1, color = "gray25",
-    size = 0.5) + geom_point(alpha = 0.8, size = 2, shape = 16,
-    aes(color = Rocks_v2)) + scale_color_manual(name = "Rock Type",
+    size = 0.5) + geom_point(alpha = 0.8, size = 1, shape = 16,
+    aes(color = Rocks_v2)) + scale_color_manual(name = "Rock type",
     values = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "gray75",
         "#0072B2", "#D55E00", "#CC79A7")) + theme_minimal() +
     theme(axis.text = element_blank(), axis.title = element_blank(),
-        panel.grid = element_blank(), legend.position = "right") +
+        panel.grid = element_blank(), legend.position = "left") +
     guides(color = guide_legend(override.aes = list(shape = 16,
         size = 4)))
 
@@ -1165,6 +1280,8 @@ meta.sub.rock <- combo %>%
     filter(!checkv_quality %in% c("Not-determined")) %>%
     filter(contig_length >= 10000) %>%
     filter(ClusterStatus == "Clustered") %>%
+    left_join(select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!max_score_group %in% c("NCLDV")) %>%
     group_by(Rocks_v2, Order) %>%
     mutate(Order = ifelse(Order == "Unassigned", "Unique VC",
         "VC with reference genomes")) %>%
@@ -1173,8 +1290,11 @@ meta.sub.rock <- combo %>%
     mutate(lab_ypos = n + 0.1 * n + ifelse(n > 40, ifelse(n <
         50, 50, 20), 1)) %>%
     mutate(norm = n/sum(n) * 100)
+```
 
+    ## Joining, by = "Genome"
 
+``` r
 a_hab_seq <- ggplot(meta.sub.rock, aes(y = Rocks_v2, fill = Rocks_v2,
     color = Rocks_v2, x = n)) + theme_bw() + geom_bar(stat = "identity",
     position = "stack", width = 0.6, orientation = "y") + scale_fill_manual(name = "Habitat",
@@ -1201,6 +1321,19 @@ tax.meta.vcs <- combo %>%
     mutate(n2 = sum(n)) %>%
     mutate(lab_ypos = n2 + 3)
 
+test <- combo %>%
+    filter(!checkv_quality %in% c("Not-determined")) %>%
+    filter(contig_length >= 10000) %>%
+    filter(ClusterStatus == "Clustered" & Order != "Unassigned") %>%
+    mutate(Family = ifelse(Family == "Mixed", "Unclassified",
+        as.character(Family))) %>%
+    group_by(Family) %>%
+    tally() %>%
+    arrange(desc(n)) %>%
+    group_by(Family) %>%
+    mutate(n2 = sum(n)) %>%
+    mutate(lab_ypos = n2 + 3)
+
 e_tax <- ggplot(tax.meta.vcs, aes(x = Family, fill = Family,
     y = n)) + theme_bw() + geom_bar(stat = "identity", position = "stack",
     width = 0.6) + scale_fill_manual(values = c(RColorBrewer::brewer.pal(8,
@@ -1213,15 +1346,13 @@ e_tax <- ggplot(tax.meta.vcs, aes(x = Family, fill = Family,
 
 
 
-(ntwk.hab.vir.hq + a_hab_seq)/(ntwk.vir + e_tax) + plot_annotation(tag_levels = "A")
-```
+# ( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) +
+# plot_annotation(tag_levels = 'A')
 
-![](09_Antarctic_RMarkDown_files/figure-gfm/fig1-1.png)<!-- -->
-
-``` r
-ggsave(filename = "plots/exploratory/ant_network_plus_VC.png",
-    plot = last_plot(), device = "png", width = 14, height = 9,
-    dpi = 300)
+# ggsave(filename =
+# 'plots/exploratory/ant_network_plus_VC.png', plot =
+# last_plot(), device = 'png', width = 14, height = 9, dpi
+# = 300)
 ```
 
 # Host/AMG plots
@@ -1318,12 +1449,15 @@ DAMG_data_un_HQ <- left_join(DAMG_data_un_HQ, DAMG_data_un_HQ_counts)
 
 ``` r
 DAMG_data_un_HQ.singleAnnot <- DAMG_data_un_HQ %>%
-    group_by(gene) %>%
+    group_by(filename, gene) %>%
     slice(1)
 
-AMGs <- left_join(DAMG_data_un_HQ.singleAnnot, host.gen.tax.meta.high)
+AMGs <- left_join(DAMG_data_un_HQ.singleAnnot, host.gen.tax.meta.high) %>%
+    left_join(select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!max_score_group %in% c("NCLDV"))
 ```
 
+    ## Joining, by = "Genome"
     ## Joining, by = "Genome"
 
 ``` r
@@ -1341,7 +1475,12 @@ amg.plotdata <- AMGs %>%
         category = ifelse(category == "carbon utilization", "Carbon Utilization",
             as.character(category))) %>%
     group_by(category, header, module) %>%
-    tally()
+    tally() %>%
+    mutate(category = ifelse(category == "Unannotated", "No Classification",
+        as.character(category))) %>%
+    mutate(category = factor(category, levels = c("Carbon Utilization",
+        "Organic Nitrogen", "Information Systems", "Transporters",
+        "Energy", "No Classification")))
 
 amg_general <- ggplot(amg.plotdata, aes(x = category, fill = category,
     y = n)) + theme_bw() + geom_bar(stat = "identity", position = "stack",
@@ -1447,9 +1586,9 @@ ggplot(host.plotdata, aes(x = HostPhylum, fill = HostPhylum,
 ![](09_Antarctic_RMarkDown_files/figure-gfm/combo_supp_mag-1.png)<!-- -->
 
 ``` r
-ggsave(filename = "plots/figs1.pdf", plot = last_plot(), device = "pdf",
+ggsave(filename = "plots/figs2.pdf", plot = last_plot(), device = "pdf",
     width = 6, height = 4, dpi = 300)
-ggsave(filename = "plots/figs1.png", plot = last_plot(), device = "png",
+ggsave(filename = "plots/figs2.png", plot = last_plot(), device = "png",
     width = 6, height = 4, dpi = 300)
 ```
 
@@ -1486,9 +1625,9 @@ summary(as.factor(host.combo$MAGvNCBI))
 ```
 
     ##          MAG-based prediction NCBI and MAG based prediction 
-    ##                          5668                           968 
+    ##                          2435                           661 
     ##         NCBI-based prediction            No host prediction 
-    ##                           139                          8021
+    ##                           446                         11254
 
 ``` r
 host.combo <- host.combo %>%
@@ -1521,13 +1660,18 @@ host.combo.plotdata <- host.combo %>%
     arrange(desc(n)) %>%
     group_by(ComboPhylum_MAG) %>%
     mutate(n2 = sum(n)) %>%
-    mutate(lab_ypos = n2 + 3)
+    mutate(lab_ypos = n2 + 3) %>%
+    mutate(ComboPhylum_MAG = factor(ComboPhylum_MAG, levels = c("Proteobacteria",
+        "Actinobacteriota", "Chloroflexota", "Armatimonadota",
+        "Bacteroidota", "Acidobacteriota", "Planctomycetota",
+        "Eremiobacterota", "Cyanobacteria", "Deinococcota", "Verrucomicrobiota",
+        "Gemmatimonadota", "Firmicutes", "Bacteria incertae sedis")))
 
 ComboPhylum_MAG_plot <- ggplot(host.combo.plotdata, aes(x = ComboPhylum_MAG,
     fill = ComboPhylum_MAG, y = n)) + theme_bw() + geom_bar(stat = "identity",
-    position = "stack", width = 0.6) + scale_fill_viridis_d(option = "B") +
-    ylab("Number of viral sequences") + xlab("") + theme(legend.position = "none") +
-    coord_flip() + scale_x_discrete(limits = rev)  #+
+    position = "stack", width = 0.6) + scale_fill_viridis_d(option = "B",
+    direction = -1) + ylab("Number of viral sequences") + xlab("") +
+    theme(legend.position = "none") + coord_flip() + scale_x_discrete(limits = rev)  #+
 # geom_text(aes(y = lab_ypos,label = n2, group =
 # HostPhylum), fontface = 'bold', size = 4, color =
 # 'black')
@@ -1542,21 +1686,54 @@ ggsave(filename = "plots/exploratory/host_combo_mag.pdf", plot = last_plot(),
     device = "pdf", width = 6, height = 6, dpi = 300)
 ```
 
-# Combined Fig 1
+# Combined Fig 1 & Fig S1
 
 ``` r
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 10,
+    spaceLegend = 0.5) {
+    myPlot + guides(shape = guide_legend(override.aes = list(size = pointSize)),
+        color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), legend.text = element_text(size = textSize),
+            legend.key.size = unit(spaceLegend, "lines"))
+}
+
 # Figure 1
-(ntwk.vir + e_tax)/(ntwk.hab.vir.hq + a_hab_seq)/(ComboPhylum_MAG_plot +
-    amg_general) + plot_annotation(tag_levels = "A")
+
+# fig1_plot <- ((guide_area() +
+# (addSmallLegend(ntwk.hab.vir.hq) + plot_layout(guides =
+# 'collect'))) + a_hab_seq + plot_layout(widths =
+# c(1,6,12))) / (plot_spacer() + ComboPhylum_MAG_plot +
+# amg_general + plot_layout(widths = c(1,9,9))) +
+# plot_annotation(tag_levels = 'A')
+
+
+# remove network
+fig1_plot <- a_hab_seq/(ComboPhylum_MAG_plot + amg_general) +
+    plot_annotation(tag_levels = "A") + plot_layout(heights = c(2,
+    3))
+
+fig1_plot
 ```
 
 ![](09_Antarctic_RMarkDown_files/figure-gfm/fig1_plot-1.png)<!-- -->
 
 ``` r
-ggsave(filename = "plots/fig1.pdf", plot = last_plot(), device = "pdf",
-    width = 14, height = 8, dpi = 300)
-ggsave(filename = "plots/fig1.png", plot = last_plot(), device = "png",
-    width = 14, height = 8, dpi = 300)
+ggsave(filename = "plots/fig1.pdf", plot = fig1_plot, device = "pdf",
+    width = 9, height = 6, dpi = 300)
+ggsave(filename = "plots/fig1.png", plot = fig1_plot, device = "png",
+    width = 9, height = 6, dpi = 300)
+
+# Figure S1
+ntwk.vir + e_tax + plot_annotation(tag_levels = "A")
+```
+
+![](09_Antarctic_RMarkDown_files/figure-gfm/fig1_plot-2.png)<!-- -->
+
+``` r
+ggsave(filename = "plots/figs1.pdf", plot = last_plot(), device = "pdf",
+    width = 8, height = 3, dpi = 300)
+ggsave(filename = "plots/figs1.png", plot = last_plot(), device = "png",
+    width = 8, height = 3, dpi = 300)
 ```
 
 # Figure 2
@@ -1579,6 +1756,15 @@ votus.long <- checkv_cdhit_tax$votu.id[checkv_cdhit_tax$contig_length >=
 
 ps.HQ <- prune_taxa(votus.high, ps)
 ps.HQ.long <- prune_taxa(votus.long, ps.HQ)
+
+votus.euk <- (left_join(combo, select(VS_data_un, Genome, max_score_group)) %>%
+    filter(!checkv_quality %in% c("Not-determined")) %>%
+    filter(is.na(contig_length) | contig_length >= 10000) %>%
+    filter(!is.na(votu.id)) %>%
+    filter(!max_score_group %in% c("NCLDV")))$votu.id
+
+ps.HQ.long <- prune_taxa(votus.euk, ps.HQ.long)
+
 
 ps.RA <- transform_sample_counts(ps.HQ.long, function(x) x/sum(x))
 
@@ -1637,7 +1823,7 @@ plot_s = ggplot(vOTU_avgs_grouped, aes(x = Site.name...8, y = (mean),
 
 site_bar_ra <- plot_s + theme_bw() + theme(text = element_text(size = 14)) +
     ylab("Mean Relative Abundance") + xlab("") + guides(fill = guide_legend(title = "Family")) +
-    scale_fill_viridis_d()  #+  theme(legend.position = 'none') +
+    scale_fill_viridis_d(option = "H")  #+  theme(legend.position = 'none') +
 # theme(axis.text.x = element_text(angle = -70, hjust = 0,
 # vjust = 0.5))
 
@@ -1671,7 +1857,7 @@ length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
     "1"])
 ```
 
-    ## [1] 7759
+    ## [1] 7055
 
 ``` r
 # found in two regions
@@ -1679,7 +1865,7 @@ length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
     "2"])
 ```
 
-    ## [1] 3066
+    ## [1] 2156
 
 ``` r
 # found in three regions
@@ -1687,7 +1873,7 @@ length(vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
     "3"])
 ```
 
-    ## [1] 159
+    ## [1] 80
 
 ``` r
 vOTU.3region.info <- combo[combo$votu.id %in% vOTU_avgs_grouped.shared$OTU[vOTU_avgs_grouped.shared$n_uniq ==
@@ -1716,10 +1902,8 @@ vOTU.3region.info <- vOTU.3region.info %>%
 summary(as.factor(vOTU.3region.info$Family2))
 ```
 
-    ## Clustered/Singleton             Outlier             Overlap           Singleton 
-    ##                   4                  24                 123                  19 
-    ##           Unique VC 
-    ##                 228
+    ##   Outlier   Overlap Singleton Unique VC 
+    ##        12        89        13       125
 
 ``` r
 # VC status, for vOTUs
@@ -1727,20 +1911,16 @@ summary(as.factor(vOTU.3region.info$Family2[vOTU.3region.info$clstr_rep ==
     1]))
 ```
 
-    ## Clustered/Singleton             Outlier             Overlap           Singleton 
-    ##                   2                  16                  21                  14 
-    ##           Unique VC 
-    ##                 106
+    ##   Outlier   Overlap Singleton Unique VC 
+    ##         8        10         9        53
 
 ``` r
 # Hosts status of overlapping sequences
 summary(as.factor(vOTU.3region.info$HostPhylum))
 ```
 
-    ##       Acidobacteria      Actinobacteria       Bacteroidetes Deinococcus-Thermus 
-    ##                   5                  16                   3                   1 
-    ##  No host prediction      Proteobacteria 
-    ##                 259                 114
+    ##      Acidobacteria     Actinobacteria No host prediction     Proteobacteria 
+    ##                  1                 12                169                 57
 
 ``` r
 # Host phyla, vOTUs
@@ -1748,10 +1928,8 @@ summary(as.factor(vOTU.3region.info$HostPhylum[vOTU.3region.info$clstr_rep ==
     1]))
 ```
 
-    ##       Acidobacteria      Actinobacteria       Bacteroidetes Deinococcus-Thermus 
-    ##                   2                   6                   2                   1 
-    ##  No host prediction      Proteobacteria 
-    ##                  97                  51
+    ##      Acidobacteria     Actinobacteria No host prediction     Proteobacteria 
+    ##                  1                  3                 53                 23
 
 ``` r
 # vOTUs across sites
@@ -1767,7 +1945,7 @@ length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq ==
     "1"])
 ```
 
-    ## [1] 6485
+    ## [1] 6034
 
 ``` r
 # found more than one site
@@ -1775,7 +1953,7 @@ length(vOTU_avgs_grouped.shared.site$OTU[vOTU_avgs_grouped.shared.site$n_uniq >
     "1"])
 ```
 
-    ## [1] 4499
+    ## [1] 3257
 
 # Beta Diversity
 
@@ -1909,10 +2087,10 @@ adonis2(formula = Dist.hell ~ Site.name...8 + Rocks_v2, data = as(sample_data(ps
     ## 
     ## adonis2(formula = Dist.hell ~ Site.name...8 + Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "margin")
     ##                Df SumOfSqs      R2      F Pr(>F)    
-    ## Site.name...8  34   46.761 0.30261 1.9552 0.0001 ***
-    ## Rocks_v2        2    1.791 0.01159 1.2732 0.0373 *  
-    ## Residual      144  101.295 0.65553                  
-    ## Total         181  154.523 1.00000                  
+    ## Site.name...8  34   46.848 0.29561 1.8834 0.0001 ***
+    ## Rocks_v2        2    1.804 0.01138 1.2329 0.0424 *  
+    ## Residual      144  105.348 0.66474                  
+    ## Total         181  158.480 1.00000                  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -1929,10 +2107,10 @@ adonis2(formula = Dist.hell ~ Site.name...8 + Rocks_v2, data = as(sample_data(ps
     ## 
     ## adonis2(formula = Dist.hell ~ Site.name...8 + Rocks_v2, data = as(sample_data(ps_hell), "data.frame"), permutations = 9999, by = "terms")
     ##                Df SumOfSqs      R2      F Pr(>F)    
-    ## Site.name...8  35   51.437 0.33288 2.0892 0.0001 ***
-    ## Rocks_v2        2    1.791 0.01159 1.2732 0.0399 *  
-    ## Residual      144  101.295 0.65553                  
-    ## Total         181  154.523 1.00000                  
+    ## Site.name...8  35   51.328 0.32388 2.0046 0.0001 ***
+    ## Rocks_v2        2    1.804 0.01138 1.2329 0.0439 *  
+    ## Residual      144  105.348 0.66474                  
+    ## Total         181  158.480 1.00000                  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -1944,7 +2122,7 @@ summary(site.pair.res$p.value < 0.05)
 ```
 
     ##    Mode   FALSE    TRUE    NA's 
-    ## logical     399     221      10
+    ## logical     385     235      10
 
 ``` r
 write.csv(site.pair.res, "results/stats/site.pairwise.permanova.results.csv")
@@ -1975,18 +2153,18 @@ permutest(disp_dist_rock, permutations = 9999, pairwise = TRUE)
     ## 
     ## Response: Distances
     ##            Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)  
-    ## Groups      3 0.10429 0.034763 2.8144   9999 0.0301 *
-    ## Residuals 178 2.19862 0.012352                       
+    ## Groups      3 0.10905 0.036350 3.2917   9999 0.0141 *
+    ## Residuals 178 1.96562 0.011043                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Pairwise comparisons:
     ## (Observed p-value below diagonal, permuted p-value above diagonal)
     ##                 Basalt/Dolerite   Granite    Quartz Sandstone
-    ## Basalt/Dolerite                 0.0043000 0.1288000    0.0002
-    ## Granite               0.0161097           0.2339000    0.5259
-    ## Quartz                0.1353131 0.2269756              0.2651
-    ## Sandstone             0.0097774 0.5217567 0.2574563
+    ## Basalt/Dolerite                 0.0010000 0.0885000    0.0001
+    ## Granite               0.0074753           0.1715000    0.4074
+    ## Quartz                0.0999622 0.1652593              0.2424
+    ## Sandstone             0.0068925 0.4046328 0.2358307
 
 ``` r
 # sig
@@ -2003,382 +2181,382 @@ permutest(disp_dist_site, permutations = 9999, pairwise = TRUE)  #sig
     ## 
     ## Response: Distances
     ##            Df Sum Sq  Mean Sq      F N.Perm Pr(>F)    
-    ## Groups     35 4.7359 0.135312 4.3951   9999  1e-04 ***
-    ## Residuals 146 4.4949 0.030787                         
+    ## Groups     35 4.6151 0.131860 4.7636   9999  1e-04 ***
+    ## Residuals 146 4.0414 0.027681                         
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## Pairwise comparisons:
     ## (Observed p-value below diagonal, permuted p-value above diagonal)
     ##                       Machu Picchu Base Dufayel Island Helliwell Hills
-    ## Machu Picchu Base                                           8.7990e-01
+    ## Machu Picchu Base                                           9.7060e-01
     ## Dufayel Island                                                        
-    ## Helliwell Hills              8.7677e-01                               
-    ## Crater Circle                6.6454e-29                     9.3081e-01
-    ## Mt. Burrow                   3.2942e-28                     9.0097e-01
-    ## Archambault Ridge            1.1484e-31                     1.1698e-01
-    ## Random Hills                 9.8134e-03                     5.2431e-01
-    ## Kay Island                   8.7295e-01                     7.7543e-01
-    ## Mt. New Zealand              8.7070e-01                     9.2594e-01
-    ## Mt. Dickason                 6.7331e-01                     7.1359e-01
-    ## Mt. Nansen                   5.0929e-01                     7.6295e-01
+    ## Helliwell Hills              9.6721e-01                               
+    ## Crater Circle                2.6441e-28                     9.3202e-01
+    ## Mt. Burrow                   0.0000e+00                     9.8620e-01
+    ## Archambault Ridge            0.0000e+00                     2.3798e-01
+    ## Random Hills                 3.9991e-02                     4.8127e-01
+    ## Kay Island                   9.6560e-01                     9.4263e-01
+    ## Mt. New Zealand              8.8021e-01                     8.6814e-01
+    ## Mt. Dickason                 5.7598e-01                     5.6753e-01
+    ## Mt. Nansen                   5.4528e-01                     7.1834e-01
     ## Mt. Keinath                                                           
-    ## Anderson Ridge               3.4916e-32                     2.1486e-02
-    ## Vegetation Island            1.3667e-01                     3.1938e-01
-    ## Mt. Larsen                   6.1320e-32                     5.2540e-02
-    ## Inexpressible Island         1.2255e-01                     1.3274e-01
-    ## Mt. Billing                  8.5562e-01                     8.6658e-01
-    ## Widowmaker Pass              7.5377e-01                     5.8270e-01
-    ## Trio Nunatak                 8.0077e-01                     9.4890e-01
-    ## Unnamed Nunatak              8.8191e-01                     9.9128e-01
+    ## Anderson Ridge               0.0000e+00                     4.2835e-02
+    ## Vegetation Island            4.0798e-02                     2.4721e-01
+    ## Mt. Larsen                   2.3503e-32                     1.3413e-01
+    ## Inexpressible Island         9.4649e-02                     1.1120e-01
+    ## Mt. Billing                  8.7213e-01                     8.3022e-01
+    ## Widowmaker Pass              8.7363e-01                     8.1435e-01
+    ## Trio Nunatak                 8.5592e-01                     8.8764e-01
+    ## Unnamed Nunatak              8.9287e-01                     9.4495e-01
     ## Harrow Peak                                                           
-    ## Mt. McGee                    7.8802e-31                     3.2271e-01
-    ## Ricker Hills                 5.2677e-01                     2.8159e-01
+    ## Mt. McGee                    0.0000e+00                     5.8323e-01
+    ## Ricker Hills                 5.4951e-01                     3.4617e-01
     ## Mt. Bowen                                                             
-    ## Pudding Butte                4.7839e-01                     5.6600e-01
-    ## Starr Nunatak                3.5912e-01                     5.3172e-01
-    ## Richard Nunatak              6.3271e-31                     4.0939e-01
-    ## Schultz Peak                 4.2210e-30                     6.7261e-01
-    ## Battleship Promontory        1.4100e-01                     1.4029e-01
-    ## Convoy Range                 8.9559e-01                     9.7093e-01
-    ## Mt. Elektra                  1.2351e-02                     3.1328e-02
-    ## Siegfried Peak               2.3853e-02                     4.0649e-01
-    ## Linnaeus Terrace             1.4484e-01                     1.0849e-01
-    ## Finger Mt.                   3.4195e-01                     4.1068e-01
-    ## University Valley            3.7636e-01                     4.0300e-01
+    ## Pudding Butte                3.8717e-01                     3.9355e-01
+    ## Starr Nunatak                2.5380e-01                     3.5189e-01
+    ## Richard Nunatak              0.0000e+00                     5.6953e-01
+    ## Schultz Peak                 0.0000e+00                     8.0308e-01
+    ## Battleship Promontory        1.4874e-01                     1.1871e-01
+    ## Convoy Range                 8.1616e-01                     8.2783e-01
+    ## Mt. Elektra                  1.2353e-03                     1.1929e-02
+    ## Siegfried Peak               1.9747e-02                     3.5835e-01
+    ## Linnaeus Terrace             1.4141e-01                     7.6572e-02
+    ## Finger Mt.                   1.4230e-01                     1.7355e-01
+    ## University Valley            2.8890e-01                     2.6578e-01
     ## Knobhead                                                              
     ##                       Crater Circle Mt. Burrow Archambault Ridge Random Hills
-    ## Machu Picchu Base        1.0000e-04 1.0000e-04        1.0000e-04   9.9000e-03
+    ## Machu Picchu Base        1.0000e-04 1.0000e-04        1.0000e-04   3.8000e-02
     ## Dufayel Island                                                               
-    ## Helliwell Hills          9.3400e-01 9.0330e-01        1.1320e-01   5.4260e-01
-    ## Crater Circle                       1.0000e-04        1.0000e-04   1.1200e-02
-    ## Mt. Burrow               0.0000e+00                   1.0000e-04   1.0300e-02
-    ## Archambault Ridge        0.0000e+00 0.0000e+00                     5.0000e-04
-    ## Random Hills             1.3252e-02 1.1192e-02        2.6011e-04             
-    ## Kay Island               7.7506e-01 8.2846e-01        5.0867e-02   1.2649e-01
-    ## Mt. New Zealand          9.0484e-01 8.8600e-01        2.6079e-01   7.4238e-01
-    ## Mt. Dickason             7.1458e-01 6.9169e-01        1.2566e-01   8.6010e-01
-    ## Mt. Nansen               5.7707e-01 5.3891e-01        3.3948e-02   5.9177e-01
+    ## Helliwell Hills          9.3290e-01 9.8480e-01        2.3110e-01   5.0300e-01
+    ## Crater Circle                       1.0000e-04        1.0000e-04   2.7700e-02
+    ## Mt. Burrow               1.1171e-28                   1.0000e-04   3.9900e-02
+    ## Archambault Ridge        3.6551e-31 0.0000e+00                     1.8000e-03
+    ## Random Hills             3.3515e-02 4.4144e-02        1.8622e-03             
+    ## Kay Island               9.5028e-01 9.2045e-01        5.1343e-02   1.2652e-01
+    ## Mt. New Zealand          8.5487e-01 8.9393e-01        3.1857e-01   7.0801e-01
+    ## Mt. Dickason             5.4638e-01 5.9235e-01        1.1538e-01   9.1592e-01
+    ## Mt. Nansen               4.9922e-01 5.7143e-01        5.3688e-02   5.5876e-01
     ## Mt. Keinath                                                                  
-    ## Anderson Ridge           0.0000e+00 0.0000e+00        0.0000e+00   6.6501e-05
-    ## Vegetation Island        1.6076e-01 1.4697e-01        6.4633e-03   5.6551e-01
-    ## Mt. Larsen               0.0000e+00 0.0000e+00        0.0000e+00   1.2985e-04
-    ## Inexpressible Island     1.4217e-01 1.3102e-01        3.9784e-03   3.7698e-01
-    ## Mt. Billing              8.8111e-01 8.6705e-01        3.4785e-01   8.6655e-01
-    ## Widowmaker Pass          7.1086e-01 7.3435e-01        3.1079e-01   2.8640e-01
-    ## Trio Nunatak             8.6897e-01 8.3122e-01        4.0621e-02   4.5983e-01
-    ## Unnamed Nunatak          9.3070e-01 9.0377e-01        1.4671e-01   5.7120e-01
+    ## Anderson Ridge           8.3895e-32 0.0000e+00        0.0000e+00   3.8747e-04
+    ## Vegetation Island        3.5270e-02 4.4193e-02        2.0410e-03   3.4930e-01
+    ## Mt. Larsen               2.2328e-31 2.2843e-32        3.5836e-31   1.0124e-03
+    ## Inexpressible Island     8.3921e-02 1.0097e-01        3.9908e-03   3.5926e-01
+    ## Mt. Billing              8.5411e-01 8.8186e-01        4.3092e-01   8.4457e-01
+    ## Widowmaker Pass          9.0558e-01 8.5654e-01        3.5903e-01   3.7806e-01
+    ## Trio Nunatak             8.0757e-01 8.8223e-01        8.3127e-02   4.0879e-01
+    ## Unnamed Nunatak          8.4089e-01 9.2114e-01        9.1125e-02   3.4691e-01
     ## Harrow Peak                                                                  
-    ## Mt. McGee                3.3969e-31 3.6811e-31        5.4246e-31   8.4465e-04
-    ## Ricker Hills             5.0926e-01 5.1886e-01        9.6532e-01   2.6878e-01
+    ## Mt. McGee                2.3175e-30 0.0000e+00        0.0000e+00   7.7043e-03
+    ## Ricker Hills             5.6323e-01 5.4221e-01        9.9130e-01   2.7806e-01
     ## Mt. Bowen                                                                    
-    ## Pudding Butte            5.4419e-01 5.0732e-01        6.1292e-03   7.0006e-01
-    ## Starr Nunatak            4.1292e-01 3.8254e-01        1.2425e-02   8.7450e-01
-    ## Richard Nunatak          0.0000e+00 0.0000e+00        0.0000e+00   1.2336e-03
-    ## Schultz Peak             0.0000e+00 0.0000e+00        0.0000e+00   3.7107e-03
-    ## Battleship Promontory    1.7311e-01 1.5475e-01        3.6140e-04   6.7621e-01
-    ## Convoy Range             9.3175e-01 9.1180e-01        2.7357e-01   6.8156e-01
-    ## Mt. Elektra              1.7576e-02 1.4477e-02        4.6642e-06   1.9359e-01
-    ## Siegfried Peak           3.4763e-02 2.8190e-02        1.0189e-04   9.8123e-01
-    ## Linnaeus Terrace         1.7337e-01 1.5714e-01        6.9195e-04   5.6205e-01
-    ## Finger Mt.               3.9762e-01 3.6622e-01        3.4168e-03   8.9108e-01
-    ## University Valley        4.2382e-01 3.9719e-01        1.1525e-02   9.7804e-01
+    ## Pudding Butte            3.4427e-01 4.1175e-01        5.9988e-03   7.0679e-01
+    ## Starr Nunatak            2.2834e-01 2.6857e-01        1.5362e-02   8.7793e-01
+    ## Richard Nunatak          2.1233e-30 0.0000e+00        0.0000e+00   7.3104e-03
+    ## Schultz Peak             1.9027e-29 0.0000e+00        0.0000e+00   1.8585e-02
+    ## Battleship Promontory    1.2742e-01 1.6141e-01        9.3372e-04   7.5939e-01
+    ## Convoy Range             7.8565e-01 8.3278e-01        2.3766e-01   6.7642e-01
+    ## Mt. Elektra              8.8864e-04 1.4765e-03        4.8095e-07   6.3294e-02
+    ## Siegfried Peak           1.5165e-02 2.2856e-02        1.5097e-04   9.5542e-01
+    ## Linnaeus Terrace         1.2408e-01 1.5155e-01        1.8980e-03   5.5398e-01
+    ## Finger Mt.               1.2097e-01 1.5510e-01        1.1094e-03   8.2384e-01
+    ## University Valley        2.6119e-01 3.0476e-01        1.2071e-02   8.7962e-01
     ## Knobhead                                                                     
     ##                       Kay Island Mt. New Zealand Mt. Dickason Mt. Nansen
-    ## Machu Picchu Base     8.8490e-01      8.7490e-01   6.8880e-01 5.3170e-01
+    ## Machu Picchu Base     9.6860e-01      8.8190e-01   5.8900e-01 5.7190e-01
     ## Dufayel Island                                                          
-    ## Helliwell Hills       7.9460e-01      9.3390e-01   7.2700e-01 7.7270e-01
-    ## Crater Circle         7.9720e-01      9.1120e-01   7.3790e-01 6.0630e-01
-    ## Mt. Burrow            8.4550e-01      8.9310e-01   7.0440e-01 5.6740e-01
-    ## Archambault Ridge     4.4500e-02      2.6380e-01   1.1330e-01 2.6400e-02
-    ## Random Hills          1.1840e-01      7.6310e-01   8.7310e-01 6.2130e-01
-    ## Kay Island                            8.0810e-01   5.8640e-01 4.5690e-01
-    ## Mt. New Zealand       7.8941e-01                   8.5320e-01 9.0800e-01
-    ## Mt. Dickason          5.5469e-01      8.4276e-01              9.3200e-01
-    ## Mt. Nansen            4.3353e-01      9.0303e-01   9.2687e-01           
+    ## Helliwell Hills       9.4680e-01      8.7760e-01   5.8370e-01 7.3660e-01
+    ## Crater Circle         9.5770e-01      8.6470e-01   5.6910e-01 5.1860e-01
+    ## Mt. Burrow            9.3380e-01      8.9760e-01   6.0400e-01 5.9670e-01
+    ## Archambault Ridge     4.3600e-02      3.2380e-01   1.0230e-01 4.2900e-02
+    ## Random Hills          1.1830e-01      7.3070e-01   9.2120e-01 5.8900e-01
+    ## Kay Island                            8.5370e-01   5.2210e-01 5.2580e-01
+    ## Mt. New Zealand       8.3928e-01                   7.7750e-01 9.1140e-01
+    ## Mt. Dickason          4.8709e-01      7.5569e-01              8.3370e-01
+    ## Mt. Nansen            5.0192e-01      8.9944e-01   8.1636e-01           
     ## Mt. Keinath                                                             
-    ## Anderson Ridge        9.8486e-03      8.3246e-02   3.5091e-02 8.7373e-03
-    ## Vegetation Island     1.0365e-01      5.5527e-01   6.3477e-01 3.8946e-01
-    ## Mt. Larsen            2.1912e-02      1.5548e-01   6.8549e-02 1.7136e-02
-    ## Inexpressible Island  6.3300e-02      3.0384e-01   3.6878e-01 2.3781e-01
-    ## Mt. Billing           7.8424e-01      9.3055e-01   9.3646e-01 9.8574e-01
-    ## Widowmaker Pass       7.7134e-01      6.1870e-01   4.3375e-01 4.4204e-01
-    ## Trio Nunatak          6.7146e-01      9.4372e-01   6.7818e-01 7.4761e-01
-    ## Unnamed Nunatak       7.8660e-01      9.3497e-01   7.3485e-01 7.9028e-01
+    ## Anderson Ridge        7.4037e-03      8.9543e-02   2.5571e-02 1.1152e-02
+    ## Vegetation Island     4.6386e-02      4.7496e-01   5.9609e-01 2.4384e-01
+    ## Mt. Larsen            2.3902e-02      2.1105e-01   6.7725e-02 2.9516e-02
+    ## Inexpressible Island  5.3818e-02      2.7241e-01   3.9150e-01 1.9687e-01
+    ## Mt. Billing           8.3370e-01      9.3693e-01   8.6996e-01 9.8067e-01
+    ## Widowmaker Pass       8.6133e-01      7.3210e-01   4.6062e-01 5.7631e-01
+    ## Trio Nunatak          8.0535e-01      9.1805e-01   5.2514e-01 7.2258e-01
+    ## Unnamed Nunatak       8.5105e-01      8.9622e-01   5.2727e-01 6.7292e-01
     ## Harrow Peak                                                             
-    ## Mt. McGee             2.0242e-01      4.7982e-01   2.7895e-01 1.0041e-01
-    ## Ricker Hills          4.5880e-01      2.9239e-01   2.5698e-01 3.2830e-01
+    ## Mt. McGee             2.8718e-01      6.0227e-01   2.9870e-01 1.8972e-01
+    ## Ricker Hills          4.6459e-01      3.2016e-01   2.4659e-01 3.5221e-01
     ## Mt. Bowen                                                               
-    ## Pudding Butte         3.2852e-01      7.6322e-01   9.4696e-01 9.2720e-01
-    ## Starr Nunatak         2.5950e-01      7.3718e-01   9.1361e-01 7.6310e-01
-    ## Richard Nunatak       3.0105e-01      5.5134e-01   3.3959e-01 1.3784e-01
-    ## Schultz Peak          7.3195e-01      7.3910e-01   5.2378e-01 3.0429e-01
-    ## Battleship Promontory 6.2251e-02      3.1503e-01   4.9962e-01 3.6419e-01
-    ## Convoy Range          8.1552e-01      9.6754e-01   8.1480e-01 8.5912e-01
-    ## Mt. Elektra           3.8770e-03      1.5345e-01   2.1174e-01 7.4667e-02
-    ## Siegfried Peak        5.9891e-02      6.6425e-01   8.1819e-01 5.0581e-01
-    ## Linnaeus Terrace      6.3323e-02      2.4154e-01   4.0230e-01 3.1266e-01
-    ## Finger Mt.            2.1241e-01      6.2623e-01   8.7557e-01 7.3069e-01
-    ## University Valley     2.4734e-01      5.9707e-01   7.9932e-01 6.7812e-01
+    ## Pudding Butte         2.9346e-01      6.7007e-01   8.6571e-01 8.1437e-01
+    ## Starr Nunatak         1.9051e-01      5.8421e-01   8.2091e-01 5.3567e-01
+    ## Richard Nunatak       2.7106e-01      5.9202e-01   2.9043e-01 1.8194e-01
+    ## Schultz Peak          6.5481e-01      7.6237e-01   4.4573e-01 3.5599e-01
+    ## Battleship Promontory 8.3571e-02      3.0885e-01   6.4683e-01 3.6804e-01
+    ## Convoy Range          7.5970e-01      9.6714e-01   7.8183e-01 9.2260e-01
+    ## Mt. Elektra           5.2567e-04      8.7389e-02   1.4872e-01 1.7763e-02
+    ## Siegfried Peak        5.4202e-02      6.2492e-01   9.0143e-01 4.5630e-01
+    ## Linnaeus Terrace      7.5242e-02      2.0338e-01   4.5594e-01 2.7799e-01
+    ## Finger Mt.            8.6736e-02      4.0393e-01   7.2716e-01 4.0124e-01
+    ## University Valley     2.0215e-01      4.8533e-01   7.8705e-01 5.3559e-01
     ## Knobhead                                                                
     ##                       Mt. Keinath Anderson Ridge Vegetation Island Mt. Larsen
-    ## Machu Picchu Base                     1.0000e-04        1.2700e-01 1.0000e-04
+    ## Machu Picchu Base                     1.0000e-04        3.6800e-02 1.0000e-04
     ## Dufayel Island                                                               
-    ## Helliwell Hills                       2.2800e-02        3.3120e-01 4.9900e-02
-    ## Crater Circle                         1.0000e-04        1.5570e-01 1.0000e-04
-    ## Mt. Burrow                            1.0000e-04        1.4130e-01 1.0000e-04
-    ## Archambault Ridge                     1.0000e-04        5.1000e-03 1.0000e-04
-    ## Random Hills                          1.0000e-04        5.9130e-01 2.0000e-04
-    ## Kay Island                            8.5000e-03        9.5800e-02 1.7900e-02
-    ## Mt. New Zealand                       8.2600e-02        5.8390e-01 1.5280e-01
-    ## Mt. Dickason                          3.1600e-02        6.6290e-01 5.9000e-02
-    ## Mt. Nansen                            7.2000e-03        4.0620e-01 1.4900e-02
+    ## Helliwell Hills                       4.1100e-02        2.5180e-01 1.2660e-01
+    ## Crater Circle                         1.0000e-04        3.2100e-02 1.0000e-04
+    ## Mt. Burrow                            1.0000e-04        3.9900e-02 1.0000e-04
+    ## Archambault Ridge                     1.0000e-04        1.9000e-03 1.0000e-04
+    ## Random Hills                          6.0000e-04        3.7040e-01 1.4000e-03
+    ## Kay Island                            6.1000e-03        3.9000e-02 2.0600e-02
+    ## Mt. New Zealand                       8.8700e-02        5.0130e-01 2.0720e-01
+    ## Mt. Dickason                          2.3900e-02        6.2560e-01 5.7000e-02
+    ## Mt. Nansen                            8.5000e-03        2.4010e-01 2.4700e-02
     ## Mt. Keinath                                                                  
-    ## Anderson Ridge                                          1.1000e-03 1.0000e-04
-    ## Vegetation Island                     1.3621e-03                   2.5000e-03
-    ## Mt. Larsen                            0.0000e+00        2.9778e-03           
-    ## Inexpressible Island                  4.4117e-04        6.2239e-01 1.3741e-03
-    ## Mt. Billing                           1.3462e-01        7.2060e-01 2.3041e-01
-    ## Widowmaker Pass                       7.6319e-02        1.6172e-01 1.6235e-01
-    ## Trio Nunatak                          2.9506e-03        2.3649e-01 1.1845e-02
-    ## Unnamed Nunatak                       3.0588e-02        3.6445e-01 7.0513e-02
+    ## Anderson Ridge                                          5.0000e-04 1.0000e-04
+    ## Vegetation Island                     3.2739e-04                   1.1000e-03
+    ## Mt. Larsen                            8.5687e-32        1.0203e-03           
+    ## Inexpressible Island                  3.0546e-04        6.9395e-01 1.5779e-03
+    ## Mt. Billing                           1.6398e-01        6.6913e-01 3.2047e-01
+    ## Widowmaker Pass                       8.3102e-02        1.8728e-01 2.2066e-01
+    ## Trio Nunatak                          4.8240e-03        1.5825e-01 3.1802e-02
+    ## Unnamed Nunatak                       9.0988e-03        1.3017e-01 3.9923e-02
     ## Harrow Peak                                                                  
-    ## Mt. McGee                             7.0788e-32        2.1413e-02 1.6725e-31
-    ## Ricker Hills                          5.5270e-01        1.6195e-01 7.6735e-01
+    ## Mt. McGee                             0.0000e+00        9.1794e-03 4.9583e-32
+    ## Ricker Hills                          5.4506e-01        1.5570e-01 8.4588e-01
     ## Mt. Bowen                                                                    
-    ## Pudding Butte                         1.5429e-04        3.6659e-01 1.0851e-03
-    ## Starr Nunatak                         1.7151e-03        5.3479e-01 4.6731e-03
-    ## Richard Nunatak                       0.0000e+00        3.0299e-02 0.0000e+00
-    ## Schultz Peak                          0.0000e+00        7.3438e-02 0.0000e+00
-    ## Battleship Promontory                 3.5326e-06        9.0791e-01 4.0533e-05
-    ## Convoy Range                          1.0416e-01        4.9537e-01 1.7362e-01
-    ## Mt. Elektra                           4.0258e-08        5.6698e-01 4.5827e-07
-    ## Siegfried Peak                        1.0903e-05        4.6590e-01 3.2781e-05
-    ## Linnaeus Terrace                      7.9371e-06        8.8907e-01 8.6734e-05
-    ## Finger Mt.                            9.9050e-05        5.1125e-01 6.3272e-04
-    ## University Valley                     7.6325e-04        6.9111e-01 3.1891e-03
+    ## Pudding Butte                         7.4814e-05        2.6604e-01 1.3055e-03
+    ## Starr Nunatak                         1.7849e-03        6.3336e-01 6.9532e-03
+    ## Richard Nunatak                       0.0000e+00        8.7115e-03 5.1469e-32
+    ## Schultz Peak                          0.0000e+00        2.1150e-02 3.0774e-32
+    ## Battleship Promontory                 5.0977e-06        6.8817e-01 1.5421e-04
+    ## Convoy Range                          7.0911e-02        4.0966e-01 1.5514e-01
+    ## Mt. Elektra                           1.7140e-09        4.1967e-01 5.9985e-08
+    ## Siegfried Peak                        1.1232e-05        2.2938e-01 5.5221e-05
+    ## Linnaeus Terrace                      1.5957e-05        9.6049e-01 3.8118e-04
+    ## Finger Mt.                            1.5366e-05        5.7964e-01 2.3879e-04
+    ## University Valley                     5.3828e-04        6.7641e-01 4.0708e-03
     ## Knobhead                                                                     
     ##                       Inexpressible Island Mt. Billing Widowmaker Pass
-    ## Machu Picchu Base               1.2280e-01  8.6450e-01      7.6830e-01
+    ## Machu Picchu Base               9.7400e-02  8.8040e-01      8.8400e-01
     ## Dufayel Island                                                        
-    ## Helliwell Hills                 1.2720e-01  8.6620e-01      5.9950e-01
-    ## Crater Circle                   1.3800e-01  8.8200e-01      7.2990e-01
-    ## Mt. Burrow                      1.1900e-01  8.6500e-01      7.5700e-01
-    ## Archambault Ridge               5.4000e-03  3.3490e-01      3.1790e-01
-    ## Random Hills                    3.9160e-01  8.6910e-01      2.9360e-01
-    ## Kay Island                      6.1500e-02  7.8870e-01      7.9370e-01
-    ## Mt. New Zealand                 3.1610e-01  9.3510e-01      6.4170e-01
-    ## Mt. Dickason                    3.8250e-01  9.3690e-01      4.5400e-01
-    ## Mt. Nansen                      2.4150e-01  9.8750e-01      4.5600e-01
+    ## Helliwell Hills                 1.0280e-01  8.3620e-01      8.2880e-01
+    ## Crater Circle                   8.5000e-02  8.5610e-01      9.1270e-01
+    ## Mt. Burrow                      9.1600e-02  8.8180e-01      8.7640e-01
+    ## Archambault Ridge               5.1000e-03  4.1200e-01      3.6550e-01
+    ## Random Hills                    3.7580e-01  8.5010e-01      3.9310e-01
+    ## Kay Island                      5.3700e-02  8.3850e-01      8.7700e-01
+    ## Mt. New Zealand                 2.8170e-01  9.4080e-01      7.5250e-01
+    ## Mt. Dickason                    4.0780e-01  8.7030e-01      4.8540e-01
+    ## Mt. Nansen                      1.9810e-01  9.8220e-01      6.0290e-01
     ## Mt. Keinath                                                           
-    ## Anderson Ridge                  1.2000e-03  1.3650e-01      6.8600e-02
-    ## Vegetation Island               6.4550e-01  7.3770e-01      1.5610e-01
-    ## Mt. Larsen                      2.8000e-03  2.1850e-01      1.5970e-01
-    ## Inexpressible Island                        4.9760e-01      4.8400e-02
-    ## Mt. Billing                     4.8292e-01                  6.3400e-01
-    ## Widowmaker Pass                 5.5612e-02  6.2475e-01                
-    ## Trio Nunatak                    7.2563e-02  8.6045e-01      4.4843e-01
-    ## Unnamed Nunatak                 1.5821e-01  8.7347e-01      5.9583e-01
+    ## Anderson Ridge                  7.0000e-04  1.5760e-01      7.5700e-02
+    ## Vegetation Island               7.1810e-01  6.8830e-01      1.7960e-01
+    ## Mt. Larsen                      3.1000e-03  3.0340e-01      2.2450e-01
+    ## Inexpressible Island                        4.8570e-01      7.1800e-02
+    ## Mt. Billing                     4.7224e-01                  7.4430e-01
+    ## Widowmaker Pass                 8.0317e-02  7.3084e-01                
+    ## Trio Nunatak                    5.5778e-02  8.5196e-01      6.5692e-01
+    ## Unnamed Nunatak                 6.2249e-02  8.5608e-01      7.3156e-01
     ## Harrow Peak                                                           
-    ## Mt. McGee                       1.7776e-02  5.5009e-01      6.6195e-01
-    ## Ricker Hills                    4.6635e-02  2.2975e-01      5.0398e-01
+    ## Mt. McGee                       2.3468e-02  6.6923e-01      7.5446e-01
+    ## Ricker Hills                    4.9088e-02  2.7125e-01      4.7961e-01
     ## Mt. Bowen                                                             
-    ## Pudding Butte                   1.0818e-01  9.2404e-01      1.8102e-01
-    ## Starr Nunatak                   2.7098e-01  8.7457e-01      2.4460e-01
-    ## Richard Nunatak                 2.6447e-02  6.0932e-01      7.7834e-01
-    ## Schultz Peak                    6.7523e-02  7.5647e-01      9.3312e-01
-    ## Battleship Promontory           4.0113e-01  5.1833e-01      2.7855e-02
-    ## Convoy Range                    2.7450e-01  9.1684e-01      6.6836e-01
-    ## Mt. Elektra                     7.9263e-01  3.5662e-01      4.8855e-03
-    ## Siegfried Peak                  2.5360e-01  8.2817e-01      1.6059e-01
-    ## Linnaeus Terrace                6.2269e-01  4.0861e-01      2.3587e-02
-    ## Finger Mt.                      1.8270e-01  8.0748e-01      1.2388e-01
-    ## University Valley               3.2824e-01  7.6247e-01      1.5369e-01
+    ## Pudding Butte                   9.6288e-02  8.5126e-01      2.3716e-01
+    ## Starr Nunatak                   4.1201e-01  7.5606e-01      2.5934e-01
+    ## Richard Nunatak                 2.2199e-02  6.6139e-01      7.4009e-01
+    ## Schultz Peak                    5.3563e-02  7.8782e-01      9.7400e-01
+    ## Battleship Promontory           3.3626e-01  5.2393e-01      6.4181e-02
+    ## Convoy Range                    2.5265e-01  9.7370e-01      6.9628e-01
+    ## Mt. Elektra                     9.6768e-01  2.8528e-01      5.3763e-03
+    ## Siegfried Peak                  2.2641e-01  8.0350e-01      2.4379e-01
+    ## Linnaeus Terrace                6.9227e-01  3.6649e-01      4.5915e-02
+    ## Finger Mt.                      2.8565e-01  6.2829e-01      9.9799e-02
+    ## University Valley               3.9040e-01  6.7297e-01      1.8001e-01
     ## Knobhead                                                              
     ##                       Trio Nunatak Unnamed Nunatak Harrow Peak  Mt. McGee
-    ## Machu Picchu Base       8.0070e-01      8.8970e-01             1.0000e-04
+    ## Machu Picchu Base       8.5740e-01      9.0000e-01             1.0000e-04
     ## Dufayel Island                                                           
-    ## Helliwell Hills         9.5250e-01      9.9190e-01             3.2640e-01
-    ## Crater Circle           8.7220e-01      9.3280e-01             1.0000e-04
-    ## Mt. Burrow              8.3510e-01      9.0280e-01             1.0000e-04
-    ## Archambault Ridge       3.7300e-02      1.3770e-01             1.0000e-04
-    ## Random Hills            4.6950e-01      5.9440e-01             9.0000e-04
-    ## Kay Island              6.8220e-01      8.0380e-01             1.9140e-01
-    ## Mt. New Zealand         9.4540e-01      9.4040e-01             4.9030e-01
-    ## Mt. Dickason            6.8250e-01      7.5400e-01             2.7570e-01
-    ## Mt. Nansen              7.5770e-01      8.0360e-01             8.6300e-02
+    ## Helliwell Hills         8.8570e-01      9.4730e-01             5.9320e-01
+    ## Crater Circle           8.0910e-01      8.4980e-01             1.0000e-04
+    ## Mt. Burrow              8.8240e-01      9.2230e-01             1.0000e-04
+    ## Archambault Ridge       7.9900e-02      8.3300e-02             1.0000e-04
+    ## Random Hills            4.1590e-01      3.5960e-01             6.1000e-03
+    ## Kay Island              8.0870e-01      8.6420e-01             2.8470e-01
+    ## Mt. New Zealand         9.2150e-01      9.0360e-01             6.0920e-01
+    ## Mt. Dickason            5.2820e-01      5.4870e-01             2.9510e-01
+    ## Mt. Nansen              7.3210e-01      6.9140e-01             1.7440e-01
     ## Mt. Keinath                                                              
-    ## Anderson Ridge          5.4000e-03      3.1300e-02             1.0000e-04
-    ## Vegetation Island       2.4410e-01      3.7470e-01             1.6800e-02
-    ## Mt. Larsen              1.4900e-02      6.7700e-02             1.0000e-04
-    ## Inexpressible Island    6.4800e-02      1.5800e-01             1.8400e-02
-    ## Mt. Billing             8.6600e-01      8.7830e-01             5.4570e-01
-    ## Widowmaker Pass         4.6660e-01      6.1520e-01             6.8340e-01
-    ## Trio Nunatak                            9.6470e-01             1.8340e-01
-    ## Unnamed Nunatak         9.6254e-01                             3.6820e-01
+    ## Anderson Ridge          8.9000e-03      8.8000e-03             1.0000e-04
+    ## Vegetation Island       1.5500e-01      1.1990e-01             7.5000e-03
+    ## Mt. Larsen              3.5900e-02      3.7100e-02             1.0000e-04
+    ## Inexpressible Island    4.6800e-02      5.6400e-02             2.1800e-02
+    ## Mt. Billing             8.5580e-01      8.6460e-01             6.6490e-01
+    ## Widowmaker Pass         6.7680e-01      7.5220e-01             7.7760e-01
+    ## Trio Nunatak                            9.4280e-01             3.6150e-01
+    ## Unnamed Nunatak         9.4038e-01                             3.8800e-01
     ## Harrow Peak                                                              
-    ## Mt. McGee               1.8869e-01      3.6381e-01                       
-    ## Ricker Hills            1.5748e-01      2.8515e-01             7.8552e-01
+    ## Mt. McGee               3.7576e-01      3.8265e-01                       
+    ## Ricker Hills            1.9250e-01      3.0874e-01             7.2180e-01
     ## Mt. Bowen                                                                
-    ## Pudding Butte           5.3593e-01      5.9555e-01             5.4732e-02
-    ## Starr Nunatak           4.7770e-01      5.7014e-01             5.2879e-02
-    ## Richard Nunatak         2.6857e-01      4.4899e-01             8.8614e-30
-    ## Schultz Peak            5.5239e-01      6.9627e-01             8.1695e-31
-    ## Battleship Promontory   8.6387e-02      1.6343e-01             6.2788e-03
-    ## Convoy Range            9.9953e-01      9.7881e-01             4.8849e-01
-    ## Mt. Elektra             1.2451e-02      4.4613e-02             1.3452e-04
-    ## Siegfried Peak          3.4485e-01      4.5844e-01             6.7200e-04
-    ## Linnaeus Terrace        5.9007e-02      1.2490e-01             9.3858e-03
-    ## Finger Mt.              3.5382e-01      4.4431e-01             3.1557e-02
-    ## University Valley       3.3480e-01      4.3321e-01             6.1526e-02
+    ## Pudding Butte           3.8048e-01      3.6687e-01             7.9491e-02
+    ## Starr Nunatak           2.7964e-01      2.6302e-01             7.3223e-02
+    ## Richard Nunatak         3.6114e-01      3.6762e-01             0.0000e+00
+    ## Schultz Peak            6.3647e-01      6.5712e-01             0.0000e+00
+    ## Battleship Promontory   7.8323e-02      9.0807e-02             2.0274e-02
+    ## Convoy Range            8.6006e-01      8.3397e-01             5.0076e-01
+    ## Mt. Elektra             3.1072e-03      2.2785e-03             3.2312e-05
+    ## Siegfried Peak          2.9346e-01      2.2694e-01             1.5258e-03
+    ## Linnaeus Terrace        4.1659e-02      6.2264e-02             2.6553e-02
+    ## Finger Mt.              1.2347e-01      1.2021e-01             1.8876e-02
+    ## University Valley       2.0731e-01      2.2140e-01             8.0753e-02
     ## Knobhead                                                                 
     ##                       Ricker Hills Mt. Bowen Pudding Butte Starr Nunatak
-    ## Machu Picchu Base       5.2770e-01              4.6770e-01    3.6550e-01
+    ## Machu Picchu Base       5.4880e-01              3.6680e-01    2.5380e-01
     ## Dufayel Island                                                          
-    ## Helliwell Hills         2.8160e-01              5.7330e-01    5.6220e-01
-    ## Crater Circle           5.1640e-01              5.3580e-01    4.2700e-01
-    ## Mt. Burrow              5.2200e-01              4.8910e-01    3.8760e-01
-    ## Archambault Ridge       9.6650e-01              1.1900e-02    1.3500e-02
-    ## Random Hills            2.6910e-01              7.0390e-01    8.8550e-01
-    ## Kay Island              4.7520e-01              3.2580e-01    2.6830e-01
-    ## Mt. New Zealand         2.9310e-01              7.6650e-01    7.5230e-01
-    ## Mt. Dickason            2.6080e-01              9.4520e-01    9.1800e-01
-    ## Mt. Nansen              3.2710e-01              9.3210e-01    7.8220e-01
+    ## Helliwell Hills         3.5160e-01              4.0660e-01    3.6990e-01
+    ## Crater Circle           5.7130e-01              3.2760e-01    2.3240e-01
+    ## Mt. Burrow              5.4390e-01              3.8940e-01    2.7040e-01
+    ## Archambault Ridge       9.9040e-01              1.0600e-02    1.4900e-02
+    ## Random Hills            2.8000e-01              7.1260e-01    8.8370e-01
+    ## Kay Island              4.8380e-01              2.9570e-01    1.9180e-01
+    ## Mt. New Zealand         3.2770e-01              6.8200e-01    6.0400e-01
+    ## Mt. Dickason            2.5060e-01              8.7060e-01    8.3450e-01
+    ## Mt. Nansen              3.5350e-01              8.1340e-01    5.5210e-01
     ## Mt. Keinath                                                             
-    ## Anderson Ridge          5.6000e-01              1.0000e-03    2.0000e-03
-    ## Vegetation Island       1.6210e-01              3.8130e-01    5.5770e-01
-    ## Mt. Larsen              7.6890e-01              3.9000e-03    5.3000e-03
-    ## Inexpressible Island    4.0400e-02              1.0870e-01    2.8320e-01
-    ## Mt. Billing             2.2680e-01              9.3020e-01    8.8020e-01
-    ## Widowmaker Pass         5.2190e-01              1.7970e-01    2.5790e-01
-    ## Trio Nunatak            1.5560e-01              5.5220e-01    4.9410e-01
-    ## Unnamed Nunatak         2.8960e-01              6.0080e-01    5.8730e-01
+    ## Anderson Ridge          5.4930e-01              6.0000e-04    2.5000e-03
+    ## Vegetation Island       1.5400e-01              2.7690e-01    6.6390e-01
+    ## Mt. Larsen              8.4900e-01              4.3000e-03    7.2000e-03
+    ## Inexpressible Island    4.0300e-02              9.6300e-02    4.3590e-01
+    ## Mt. Billing             2.7280e-01              8.5940e-01    7.6520e-01
+    ## Widowmaker Pass         5.0110e-01              2.3970e-01    2.7020e-01
+    ## Trio Nunatak            1.9310e-01              3.9440e-01    2.8440e-01
+    ## Unnamed Nunatak         3.1450e-01              3.6960e-01    2.7620e-01
     ## Harrow Peak                                                             
-    ## Mt. McGee               7.8680e-01              5.6800e-02    4.8000e-02
-    ## Ricker Hills                                    4.7800e-02    1.6970e-01
+    ## Mt. McGee               7.2240e-01              8.2700e-02    6.7800e-02
+    ## Ricker Hills                                    4.8100e-02    1.5220e-01
     ## Mt. Bowen                                                               
-    ## Pudding Butte           4.7111e-02                            7.9330e-01
-    ## Starr Nunatak           1.6864e-01              7.8338e-01              
-    ## Richard Nunatak         7.2676e-01              9.1603e-02    7.8591e-02
-    ## Schultz Peak            5.9996e-01              2.6925e-01    2.0092e-01
-    ## Battleship Promontory   7.1504e-03              2.1166e-01    5.0092e-01
-    ## Convoy Range            4.0649e-01              7.0588e-01    6.7881e-01
-    ## Mt. Elektra             4.8512e-03              3.2412e-02    1.2342e-01
-    ## Siegfried Peak          1.4791e-01              6.2813e-01    8.4843e-01
-    ## Linnaeus Terrace        3.9698e-03              1.2889e-01    3.8784e-01
-    ## Finger Mt.              4.2221e-02              7.0669e-01    9.8415e-01
-    ## University Valley       6.1373e-02              5.9529e-01    8.5891e-01
+    ## Pudding Butte           4.7397e-02                            5.5440e-01
+    ## Starr Nunatak           1.5008e-01              5.4559e-01              
+    ## Richard Nunatak         7.2935e-01              7.3935e-02    6.9672e-02
+    ## Schultz Peak            6.1617e-01              2.1484e-01    1.5328e-01
+    ## Battleship Promontory   9.3921e-03              2.8380e-01    8.7661e-01
+    ## Convoy Range            3.9495e-01              7.1807e-01    5.7027e-01
+    ## Mt. Elektra             3.9408e-03              9.1394e-03    1.4465e-01
+    ## Siegfried Peak          1.5649e-01              6.4921e-01    8.1759e-01
+    ## Linnaeus Terrace        4.6288e-03              1.2693e-01    5.8857e-01
+    ## Finger Mt.              3.0488e-02              3.8228e-01    9.7015e-01
+    ## University Valley       5.7355e-02              4.8380e-01    9.8523e-01
     ## Knobhead                                                                
     ##                       Richard Nunatak Schultz Peak Battleship Promontory
-    ## Machu Picchu Base          1.0000e-04   1.0000e-04            1.3780e-01
+    ## Machu Picchu Base          1.0000e-04   1.0000e-04            1.4570e-01
     ## Dufayel Island                                                          
-    ## Helliwell Hills            4.1870e-01   6.7550e-01            1.3640e-01
-    ## Crater Circle              1.0000e-04   1.0000e-04            1.6800e-01
-    ## Mt. Burrow                 1.0000e-04   1.0000e-04            1.4590e-01
-    ## Archambault Ridge          1.0000e-04   1.0000e-04            2.9000e-03
-    ## Random Hills               1.6000e-03   3.3000e-03            6.7600e-01
-    ## Kay Island                 3.0960e-01   7.5110e-01            6.7400e-02
-    ## Mt. New Zealand            5.6310e-01   7.5020e-01            3.2020e-01
-    ## Mt. Dickason               3.4270e-01   5.3610e-01            5.0080e-01
-    ## Mt. Nansen                 1.2450e-01   3.0480e-01            3.5740e-01
+    ## Helliwell Hills            5.7900e-01   8.0600e-01            1.1520e-01
+    ## Crater Circle              1.0000e-04   1.0000e-04            1.2790e-01
+    ## Mt. Burrow                 1.0000e-04   1.0000e-04            1.5290e-01
+    ## Archambault Ridge          1.0000e-04   1.0000e-04            5.0000e-03
+    ## Random Hills               7.0000e-03   1.6500e-02            7.5800e-01
+    ## Kay Island                 2.7310e-01   6.8120e-01            8.7700e-02
+    ## Mt. New Zealand            6.0380e-01   7.7390e-01            3.1270e-01
+    ## Mt. Dickason               2.8800e-01   4.5860e-01            6.4870e-01
+    ## Mt. Nansen                 1.7100e-01   3.6330e-01            3.5840e-01
     ## Mt. Keinath                                                             
-    ## Anderson Ridge             1.0000e-04   1.0000e-04            1.0000e-04
-    ## Vegetation Island          2.8300e-02   6.4300e-02            9.0740e-01
-    ## Mt. Larsen                 1.0000e-04   1.0000e-04            1.0000e-04
-    ## Inexpressible Island       2.7200e-02   6.7300e-02            4.0860e-01
-    ## Mt. Billing                6.0080e-01   7.5020e-01            5.2510e-01
-    ## Widowmaker Pass            8.0020e-01   9.4010e-01            2.8800e-02
-    ## Trio Nunatak               2.6270e-01   5.5630e-01            8.4700e-02
-    ## Unnamed Nunatak            4.5370e-01   7.0830e-01            1.5970e-01
+    ## Anderson Ridge             1.0000e-04   1.0000e-04            2.0000e-04
+    ## Vegetation Island          8.9000e-03   1.8000e-02            6.9590e-01
+    ## Mt. Larsen                 1.0000e-04   1.0000e-04            1.5000e-03
+    ## Inexpressible Island       2.5700e-02   5.8900e-02            3.4080e-01
+    ## Mt. Billing                6.5400e-01   7.8470e-01            5.3430e-01
+    ## Widowmaker Pass            7.6290e-01   9.7680e-01            6.7100e-02
+    ## Trio Nunatak               3.5220e-01   6.3610e-01            7.5300e-02
+    ## Unnamed Nunatak            3.7120e-01   6.6830e-01            8.5400e-02
     ## Harrow Peak                                                             
-    ## Mt. McGee                  1.0000e-04   1.0000e-04            9.1000e-03
-    ## Ricker Hills               7.2860e-01   6.0390e-01            7.2000e-03
+    ## Mt. McGee                  1.0000e-04   1.0000e-04            2.6400e-02
+    ## Ricker Hills               7.3160e-01   6.1800e-01            9.4000e-03
     ## Mt. Bowen                                                               
-    ## Pudding Butte              9.8500e-02   2.5800e-01            2.1710e-01
-    ## Starr Nunatak              7.6000e-02   2.0340e-01            5.0610e-01
-    ## Richard Nunatak                         1.0000e-04            2.0700e-02
-    ## Schultz Peak               0.0000e+00                         6.2900e-02
-    ## Battleship Promontory      1.2649e-02   5.8656e-02                      
-    ## Convoy Range               5.6118e-01   7.5649e-01            2.8535e-01
-    ## Mt. Elektra                3.3550e-04   3.0040e-03            3.4964e-01
-    ## Siegfried Peak             1.2141e-03   6.3222e-03            5.8472e-01
-    ## Linnaeus Terrace           1.7498e-02   6.7321e-02            6.8791e-01
-    ## Finger Mt.                 5.4418e-02   1.7716e-01            4.0564e-01
-    ## University Valley          9.2662e-02   2.2639e-01            6.2573e-01
+    ## Pudding Butte              8.0900e-02   2.0200e-01            2.9850e-01
+    ## Starr Nunatak              6.8400e-02   1.5230e-01            8.7690e-01
+    ## Richard Nunatak                         1.0000e-04            2.8200e-02
+    ## Schultz Peak               0.0000e+00                         7.3500e-02
+    ## Battleship Promontory      1.8566e-02   6.9436e-02                      
+    ## Convoy Range               4.9011e-01   6.7683e-01            3.4179e-01
+    ## Mt. Elektra                2.8144e-05   2.6689e-04            1.2623e-01
+    ## Siegfried Peak             1.4023e-03   6.1487e-03            6.6963e-01
+    ## Linnaeus Terrace           2.4659e-02   7.4505e-02            5.2460e-01
+    ## Finger Mt.                 1.7328e-02   6.4529e-02            8.6998e-01
+    ## University Valley          7.6409e-02   1.7646e-01            8.8040e-01
     ## Knobhead                                                                
     ##                       Convoy Range Mt. Elektra Siegfried Peak Linnaeus Terrace
-    ## Machu Picchu Base       9.0490e-01  1.7900e-02     2.1000e-02       1.3830e-01
+    ## Machu Picchu Base       8.3230e-01  4.6000e-03     1.6800e-02       1.3620e-01
     ## Dufayel Island                                                                
-    ## Helliwell Hills         9.7140e-01  2.8500e-02     4.1840e-01       1.0330e-01
-    ## Crater Circle           9.3670e-01  2.3200e-02     3.3700e-02       1.6820e-01
-    ## Mt. Burrow              9.1910e-01  2.1000e-02     2.8600e-02       1.4610e-01
-    ## Archambault Ridge       2.7210e-01  1.0000e-04     5.0000e-04       3.3000e-03
-    ## Random Hills            7.0220e-01  1.9190e-01     9.8320e-01       5.6210e-01
-    ## Kay Island              8.3620e-01  7.0000e-03     5.4100e-02       6.5700e-02
-    ## Mt. New Zealand         9.6780e-01  1.5250e-01     6.8120e-01       2.4130e-01
-    ## Mt. Dickason            8.2290e-01  2.0710e-01     8.2310e-01       3.9950e-01
-    ## Mt. Nansen              8.7260e-01  7.2400e-02     5.2660e-01       3.0030e-01
+    ## Helliwell Hills         8.4020e-01  1.0100e-02     3.7240e-01       7.0400e-02
+    ## Crater Circle           8.0820e-01  3.2000e-03     1.6600e-02       1.2240e-01
+    ## Mt. Burrow              8.4840e-01  5.1000e-03     2.2300e-02       1.4360e-01
+    ## Archambault Ridge       2.2970e-01  1.0000e-04     7.0000e-04       6.1000e-03
+    ## Random Hills            7.0170e-01  6.5400e-02     9.6040e-01       5.5390e-01
+    ## Kay Island              7.8650e-01  1.4000e-03     4.8500e-02       7.7700e-02
+    ## Mt. New Zealand         9.6860e-01  8.4500e-02     6.4550e-01       2.0250e-01
+    ## Mt. Dickason            8.0200e-01  1.4420e-01     9.0500e-01       4.5040e-01
+    ## Mt. Nansen              9.3130e-01  2.0200e-02     4.7270e-01       2.6410e-01
     ## Mt. Keinath                                                                   
-    ## Anderson Ridge          9.0400e-02  1.0000e-04     1.0000e-04       4.0000e-04
-    ## Vegetation Island       5.2150e-01  5.7490e-01     4.8810e-01       8.9660e-01
-    ## Mt. Larsen              1.6790e-01  2.0000e-04     1.0000e-04       1.1000e-03
-    ## Inexpressible Island    2.7430e-01  7.9670e-01     2.6220e-01       6.2490e-01
-    ## Mt. Billing             9.2070e-01  3.6080e-01     8.3280e-01       4.1690e-01
-    ## Widowmaker Pass         6.9120e-01  5.5000e-03     1.6230e-01       2.4700e-02
-    ## Trio Nunatak            9.9950e-01  1.0900e-02     3.4920e-01       5.7900e-02
-    ## Unnamed Nunatak         9.8220e-01  3.8200e-02     4.7680e-01       1.2110e-01
+    ## Anderson Ridge          5.8800e-02  1.0000e-04     1.0000e-04       8.0000e-04
+    ## Vegetation Island       4.3170e-01  4.2450e-01     2.2610e-01       9.6430e-01
+    ## Mt. Larsen              1.4330e-01  2.0000e-04     1.0000e-04       2.6000e-03
+    ## Inexpressible Island    2.5300e-01  9.6780e-01     2.3230e-01       6.9720e-01
+    ## Mt. Billing             9.7090e-01  2.9290e-01     8.1070e-01       3.7960e-01
+    ## Widowmaker Pass         7.2070e-01  6.8000e-03     2.5030e-01       4.8500e-02
+    ## Trio Nunatak            8.6160e-01  2.9000e-03     2.9690e-01       3.9100e-02
+    ## Unnamed Nunatak         8.4610e-01  2.7000e-03     2.2410e-01       5.5600e-02
     ## Harrow Peak                                                                   
-    ## Mt. McGee               5.0500e-01  1.3000e-03     4.0000e-04       1.5200e-02
-    ## Ricker Hills            4.1650e-01  4.6000e-03     1.4420e-01       4.6000e-03
+    ## Mt. McGee               5.1630e-01  6.0000e-04     1.2000e-03       3.6500e-02
+    ## Ricker Hills            4.0240e-01  3.8000e-03     1.5370e-01       5.4000e-03
     ## Mt. Bowen                                                                     
-    ## Pudding Butte           7.1090e-01  3.1000e-02     6.2840e-01       1.3550e-01
-    ## Starr Nunatak           6.9680e-01  1.2260e-01     8.5700e-01       3.8580e-01
-    ## Richard Nunatak         5.7980e-01  2.3000e-03     2.1000e-03       2.8900e-02
-    ## Schultz Peak            7.7550e-01  7.4000e-03     7.0000e-03       7.1100e-02
-    ## Battleship Promontory   2.7380e-01  3.5490e-01     5.9610e-01       6.9180e-01
-    ## Convoy Range                        1.0730e-01     6.0490e-01       2.2680e-01
-    ## Mt. Elektra             1.1076e-01                 9.7600e-02       6.8360e-01
-    ## Siegfried Peak          5.7788e-01  1.0244e-01                      4.5870e-01
-    ## Linnaeus Terrace        2.3868e-01  6.6894e-01     4.5064e-01                 
-    ## Finger Mt.              5.7143e-01  8.1135e-02     8.6918e-01       2.6317e-01
-    ## University Valley       5.5993e-01  2.1257e-01     9.6428e-01       4.4608e-01
+    ## Pudding Butte           7.1910e-01  7.4000e-03     6.5490e-01       1.3340e-01
+    ## Starr Nunatak           5.8710e-01  1.4420e-01     8.3120e-01       5.9040e-01
+    ## Richard Nunatak         5.0840e-01  8.0000e-04     2.1000e-03       3.6800e-02
+    ## Schultz Peak            7.0120e-01  2.5000e-03     7.0000e-03       7.6200e-02
+    ## Battleship Promontory   3.2780e-01  1.3190e-01     6.7990e-01       5.3200e-01
+    ## Convoy Range                        5.4900e-02     6.0270e-01       2.4240e-01
+    ## Mt. Elektra             5.3243e-02                 1.6200e-02       5.3960e-01
+    ## Siegfried Peak          5.7739e-01  1.9296e-02                      4.3650e-01
+    ## Linnaeus Terrace        2.5526e-01  5.2317e-01     4.3009e-01                 
+    ## Finger Mt.              4.0337e-01  7.6980e-02     7.4767e-01       4.7115e-01
+    ## University Valley       5.1220e-01  1.6289e-01     8.2383e-01       5.3189e-01
     ## Knobhead                                                                      
     ##                       Finger Mt. University Valley Knobhead
-    ## Machu Picchu Base     3.2370e-01        3.6830e-01         
+    ## Machu Picchu Base     1.4060e-01        2.8330e-01         
     ## Dufayel Island                                             
-    ## Helliwell Hills       4.1400e-01        4.0700e-01         
-    ## Crater Circle         3.8640e-01        4.2600e-01         
-    ## Mt. Burrow            3.5400e-01        3.9070e-01         
-    ## Archambault Ridge     7.0000e-03        1.4900e-02         
-    ## Random Hills          8.9250e-01        9.7840e-01         
-    ## Kay Island            2.1530e-01        2.5150e-01         
-    ## Mt. New Zealand       6.3930e-01        6.1920e-01         
-    ## Mt. Dickason          8.7640e-01        8.0080e-01         
-    ## Mt. Nansen            7.2740e-01        6.8700e-01         
+    ## Helliwell Hills       1.7090e-01        2.7170e-01         
+    ## Crater Circle         1.2210e-01        2.6110e-01         
+    ## Mt. Burrow            1.5120e-01        2.9570e-01         
+    ## Archambault Ridge     2.8000e-03        1.7200e-02         
+    ## Random Hills          8.2410e-01        8.8670e-01         
+    ## Kay Island            8.7400e-02        2.0290e-01         
+    ## Mt. New Zealand       4.1430e-01        5.0830e-01         
+    ## Mt. Dickason          7.3780e-01        7.9430e-01         
+    ## Mt. Nansen            3.9260e-01        5.4100e-01         
     ## Mt. Keinath                                                
-    ## Anderson Ridge        1.0000e-03        2.7000e-03         
-    ## Vegetation Island     5.2250e-01        7.0100e-01         
-    ## Mt. Larsen            2.1000e-03        6.0000e-03         
-    ## Inexpressible Island  1.8100e-01        3.4280e-01         
-    ## Mt. Billing           8.1290e-01        7.6800e-01         
-    ## Widowmaker Pass       1.2460e-01        1.6120e-01         
-    ## Trio Nunatak          3.6520e-01        3.4530e-01         
-    ## Unnamed Nunatak       4.3980e-01        4.3910e-01         
+    ## Anderson Ridge        3.0000e-04        2.0000e-03         
+    ## Vegetation Island     5.9020e-01        6.9370e-01         
+    ## Mt. Larsen            1.5000e-03        6.0000e-03         
+    ## Inexpressible Island  2.9580e-01        4.1180e-01         
+    ## Mt. Billing           6.3920e-01        6.8500e-01         
+    ## Widowmaker Pass       9.9200e-02        1.8780e-01         
+    ## Trio Nunatak          1.2100e-01        2.1300e-01         
+    ## Unnamed Nunatak       1.1610e-01        2.2120e-01         
     ## Harrow Peak                                                
-    ## Mt. McGee             3.5800e-02        6.3700e-02         
-    ## Ricker Hills          3.7000e-02        5.6800e-02         
+    ## Mt. McGee             2.4900e-02        8.4400e-02         
+    ## Ricker Hills          2.5100e-02        5.1300e-02         
     ## Mt. Bowen                                                  
-    ## Pudding Butte         7.1240e-01        6.1100e-01         
-    ## Starr Nunatak         9.8550e-01        8.6010e-01         
-    ## Richard Nunatak       5.8200e-02        9.2800e-02         
-    ## Schultz Peak          1.7540e-01        2.1830e-01         
-    ## Battleship Promontory 4.1200e-01        6.3520e-01         
-    ## Convoy Range          5.6450e-01        5.7320e-01         
-    ## Mt. Elektra           7.9100e-02        2.2110e-01         
-    ## Siegfried Peak        8.7500e-01        9.6420e-01         
-    ## Linnaeus Terrace      2.6840e-01        4.6070e-01         
-    ## Finger Mt.                              8.3850e-01         
-    ## University Valley     8.3585e-01                           
+    ## Pudding Butte         3.9360e-01        4.9400e-01         
+    ## Starr Nunatak         9.7130e-01        9.8460e-01         
+    ## Richard Nunatak       2.5400e-02        8.1800e-02         
+    ## Schultz Peak          6.7900e-02        1.6620e-01         
+    ## Battleship Promontory 8.7290e-01        8.8230e-01         
+    ## Convoy Range          3.9550e-01        5.2480e-01         
+    ## Mt. Elektra           7.4800e-02        1.6980e-01         
+    ## Siegfried Peak        7.6500e-01        8.3640e-01         
+    ## Linnaeus Terrace      4.7930e-01        5.4730e-01         
+    ## Finger Mt.                              9.8680e-01         
+    ## University Valley     9.8858e-01                           
     ## Knobhead
 
 ``` r
@@ -2390,14 +2568,14 @@ summary(tidy(tuk_disp_dist_rock)$adj.p.value < 0.05)
 ```
 
     ##    Mode   FALSE    TRUE 
-    ## logical       5       1
+    ## logical       4       2
 
 ``` r
 summary(tidy(tuk_disp_dist_site)$adj.p.value < 0.05)
 ```
 
     ##    Mode   FALSE    TRUE 
-    ## logical     567      63
+    ## logical     539      91
 
 ``` r
 write.csv(tidy(tuk_disp_dist_rock), "results/stats/rock.tukeyposthoc.dispersion.csv")
@@ -2442,12 +2620,12 @@ mantel.test.hell
     ## Call:
     ## vegan::mantel(xdis = comm.dist.hell, ydis = dist.geo, method = "spearman",      permutations = 9999, na.rm = TRUE) 
     ## 
-    ## Mantel statistic r: 0.1966 
+    ## Mantel statistic r: 0.2015 
     ##       Significance: 1e-04 
     ## 
     ## Upper quantiles of permutations (null model):
     ##    90%    95%  97.5%    99% 
-    ## 0.0458 0.0595 0.0719 0.0890 
+    ## 0.0472 0.0613 0.0742 0.0901 
     ## Permutation: free
     ## Number of permutations: 9999
 
@@ -2458,7 +2636,7 @@ mantel.stats <- data.frame(label = paste("r = ", signif(mantel.test.hell$statist
 dist_hell <- ggplot(mapping = aes(x = jitter(dist.geo/1000, amount = 1),
     y = comm.dist.hell)) + theme_bw() + geom_point(shape = 16,
     size = 1, alpha = 0.1, color = "gray25") + geom_smooth(method = "lm",
-    color = "#0292e3", se = F) + labs(x = "Geographical Separation (km)",
+    color = "orange", se = F) + labs(x = "Geographical Separation (km)",
     y = "Hellinger Distance") + geom_text(data = mantel.stats,
     aes(x = 475, y = 0.15, label = label), hjust = 0, size = 3) +
     theme(text = element_text(size = 14))
@@ -2502,12 +2680,12 @@ mantel.test.nonzero
     ## Call:
     ## vegan::mantel(xdis = comm.dist.nonzero, ydis = dist.geo.nonzero,      method = "spearman", permutations = 9999, na.rm = TRUE) 
     ## 
-    ## Mantel statistic r: 0.1701 
+    ## Mantel statistic r: 0.1727 
     ##       Significance: 1e-04 
     ## 
     ## Upper quantiles of permutations (null model):
     ##    90%    95%  97.5%    99% 
-    ## 0.0495 0.0659 0.0793 0.0953 
+    ## 0.0508 0.0685 0.0832 0.0974 
     ## Permutation: free
     ## Number of permutations: 9999
 
@@ -2563,21 +2741,14 @@ ggsave(filename = "plots/exploratory/art_map.png", plot = last_plot(),
 # Figure 2
 
 ``` r
-addSmallLegend <- function(myPlot, pointSize = 3, textSize = 10,
-    spaceLegend = 0.5) {
-    myPlot + guides(shape = guide_legend(override.aes = list(size = pointSize)),
-        color = guide_legend(override.aes = list(size = pointSize))) +
-        theme(legend.title = element_text(size = textSize), legend.text = element_text(size = textSize),
-            legend.key.size = unit(spaceLegend, "lines"))
-}
-
-
 # flip RA plot
 site_flip <- site_bar_ra + coord_flip()
 
-(addSmallLegend(as.big.nocol + theme(legend.position = "top")))/(addSmallLegend(site_flip +
-    theme(legend.position = "left")) + ((addSmallLegend(site_pcoa)/dist_hell))) +
-    plot_annotation(tag_levels = "A")
+
+((addSmallLegend(as.big.nocol + theme(legend.position = "top")) +
+    plot_layout(guides = "keep"))/((addSmallLegend(site_flip) +
+    ((addSmallLegend(site_pcoa)/dist_hell))))) + plot_layout(guides = "collect",
+    heights = c(1, 4)) + plot_annotation(tag_levels = "A")
 ```
 
     ## Warning: Duplicated override.aes is ignored.
@@ -2591,7 +2762,7 @@ site_flip <- site_bar_ra + coord_flip()
 
 ``` r
 ggsave(filename = "plots/fig2.pdf", plot = last_plot(), device = "pdf",
-    width = 20, height = 10, dpi = 300)
+    width = 11.5, height = 9, dpi = 300)
 ```
 
     ## Warning: Duplicated override.aes is ignored.
@@ -2604,7 +2775,7 @@ ggsave(filename = "plots/fig2.pdf", plot = last_plot(), device = "pdf",
 
 ``` r
 ggsave(filename = "plots/fig2.png", plot = last_plot(), device = "png",
-    width = 20, height = 10, dpi = 300)
+    width = 11.5, height = 9, dpi = 300)
 ```
 
     ## Warning: Duplicated override.aes is ignored.
@@ -2633,10 +2804,10 @@ combo2 <- combo %>%
     filter(!is.na(votu.id))
 
 # total number of unique VCs
-length(unique(combo2$VCStatus)) - 1  #Unclustered
+length(unique(combo2$VCStatus)) - tot_NCLDV[1] - 1  #Unclustered
 ```
 
-    ## [1] 10624
+    ## [1] 7598
 
 ``` r
 # total number of vOTUs
@@ -2765,10 +2936,10 @@ combo.filt <- combo %>%
     filter(!is.na(votu.id))
 
 # total number of unique VCs
-length(unique(combo.filt$VCStatus)) - 1  #Unclustered
+length(unique(combo.filt$VCStatus)) - filt_NCLDV[1] - 1  #Unclustered
 ```
 
-    ## [1] 2851
+    ## [1] 2286
 
 ``` r
 # total number of vOTUs

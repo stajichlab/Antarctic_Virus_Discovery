@@ -18,6 +18,7 @@ opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```{r load, message=FALSE, warning=FALSE}
 library(GGally)
 library(tidyverse)
+library(scales)
 library(network)
 library(vroom)
 library(phyloseq)
@@ -617,6 +618,8 @@ saveRDS(DAMG_data_un, "results/processed_data/dram_amg_results.RDS")
 write_csv(DAMG_data_un, "results/processed_data/dram_amg_results.csv")
 
 
+
+
 ```
 
 # VirSorter2 predicted viral categories
@@ -778,6 +781,10 @@ host.gen.tax <- readRDS("results/processed_data/host.gen.tax.RDS")
 #load in host prediction from blast
 host.mag <- vroom("data/mag_host_prediction/antmag.blastn.tab", col_names = c("qseqid", "sseqid", "pident", "bitscore" ,"evalue", "length", "sgi", "sacc", "sallseqid", "staxids", "sscinames", "stitle"))
 
+host.mag.db.contig.leng <- vroom("data/mag_host_prediction/Antartica_MAGs_contig_len.txt", col_names = c("sseqid", "contig_length"))
+
+host.mag <- left_join(host.mag, host.mag.db.contig.leng)
+
 host.mag.tax <- vroom("data/mag_host_prediction/Taxonomy_summary.csv")
 host.mag.tax <- host.mag.tax[-c(8)]
 
@@ -788,11 +795,17 @@ minlen=2000
 minpercid=70
 minbit=50
 mine=0.001 #we set evalue at 1e-25 so not an issue here, they all should be lower than this
+host_contig_length=50 #viral sequence cannot be more than 50% of total host MAG contig length, prevents matching small viral contigs
 
 #now filter host pred results by the above reqs
 host.mag.filt <- host.mag[which(host.mag$bitscore >= minbit),]
 host.mag.filt <- host.mag.filt[which(host.mag.filt$length >= minlen),]
 host.mag.filt <- host.mag.filt[which(host.mag.filt$pident >= minpercid),]
+
+host.mag.filt <- host.mag.filt %>%
+  mutate(host_contig_perc = 100*(1 - (contig_length - length) / contig_length)) %>%
+  filter(host_contig_perc > 50)
+
 
 #take the dataframe & group it by the grouping variable (query genome)
 #and take the top five hits
@@ -838,12 +851,13 @@ host.mag.filt.taxa.top1 <- host.mag.filt.top5.taxa %>%
 #if only one taxonomic classification at each level in host.filt.top5.taxa.info,
 #then we take the phylum of the top hit from host.filt.taxa.top1, otherwise we assign it as "Mixed"
 # #tomeaning that multiple taxonomic groupings were matches at that level for that genome
+
 # host.gen.tax.mag <- host.gen.mag %>%
-#   mutate(Phylum = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names,]$Pd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names,]$Phylum, "Mixed")) %>%
-#   mutate(Class = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names,]$Cd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names,]$Class, "Mixed")) %>%
-#   mutate(Order = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names,]$Od == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names,]$Order, "Mixed")) %>%
-#   mutate(Family = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names,]$Fd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names,]$Family, "Mixed")) %>%
-#   mutate(Genus = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names,]$Gd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names,]$Genus, "Mixed"))
+#   mutate(Phylum = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names.mag,]$Pd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names.mag,]$Phylum, "Mixed")) %>%
+#   mutate(Class = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names.mag,]$Cd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names.mag,]$Class, "Mixed")) %>%
+#   mutate(Order = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names.mag,]$Od == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names.mag,]$Order, "Mixed")) %>%
+#   mutate(Family = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names.mag,]$Fd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names.mag,]$Family, "Mixed")) %>%
+#   mutate(Genus = ifelse(host.mag.filt.top5.taxa.info[host.mag.filt.top5.taxa.info$qseqid == virus.names.mag,]$Gd == 1, host.mag.filt.taxa.top1[host.mag.filt.taxa.top1$qseqid == virus.names.mag,]$Genus, "Mixed"))
 
 #remove Mars-44.bin.73
 
@@ -864,11 +878,8 @@ host.gen.tax.mag <- host.gen.tax.mag[host.gen.tax.mag$sacc != "Mars-44.bin.73",]
 ```
 
 
-
-# Networks
-
-
-```{r networks}
+# Removing NCLDVs from Vcontact2 results
+```{r virsorter_exp}
 #load in files using vroom
 sampledata <- vroom("data/metadata_all_samples.tsv")
 checkv_cdhit_tax <- vroom("results/processed_data/checkv_cdhit_results_with_tax_ictv.csv")
@@ -889,6 +900,39 @@ sampledata2 <- sampledata %>%
 #we will use this for some of our cluster filtering below and later to plot
 combo <- full_join(sampledata2, checkv_cdhit_tax2, by = c("SampleID" = "filename"))
 
+
+
+virsort_values <- left_join(combo, VS_data_un) %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  filter(!is.na(votu.id)) 
+
+#get number of sequences per score group
+summary(as.factor(virsort_values$max_score_group))
+
+#get number of vOTUs per score group
+summary(as.factor(virsort_values$max_score_group[virsort_values$clstr_rep == 1]))
+
+#get summary of max virsorter score group based on majority VC membership
+virsort_get_VC_scores <- virsort_values %>% filter(VCStatus != "Unclustered") %>% group_by(VCStatus, max_score_group) %>% tally() %>% group_by(VCStatus) %>%  slice(1) %>% select(-n) %>% group_by(max_score_group) %>% tally()
+
+#number NCLDV VCs to remove from filt
+filt_NCLDV <- virsort_get_VC_scores$n[virsort_get_VC_scores$max_score_group == "NCLDV"]
+
+virsort_values_unref_set <- left_join(combo, VS_data_un) %>%
+  filter(!is.na(votu.id)) %>% filter(VCStatus != "Unclustered") %>% group_by(VCStatus, max_score_group) %>% tally() %>% group_by(VCStatus) %>%  slice(1) %>% select(-n) %>% group_by(max_score_group) %>% tally()
+
+#number to remove from total
+tot_NCLDV <- virsort_values_unref_set$n[virsort_values_unref_set$max_score_group == "NCLDV"]
+
+
+```
+
+# Networks
+
+
+```{r networks}
+
 #these take a while to load the images
 
 clstrd.nodes <- nodes %>% 
@@ -908,6 +952,8 @@ vir.fam.clust <- genome.ov %>%
   left_join(select(combo, VCStatus, checkv_quality, contig_length), by = c("VC"="VCStatus")) %>% 
   filter(!checkv_quality %in% c("Not-determined")) %>%
   filter(is.na(contig_length) | contig_length >= 10000) %>%
+  left_join(select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!max_score_group %in% c("NCLDV")) %>%
   group_by(Order, Family) %>% 
   count() %>% 
   group_by(Order) %>% 
@@ -921,6 +967,8 @@ vir.fam.nodes <- clstrd.nodes %>%
   left_join(combo) %>%
   filter(!checkv_quality %in% c("Not-determined")) %>%
   filter(is.na(contig_length) | contig_length >= 10000) %>%
+  left_join(select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!max_score_group %in% c("NCLDV")) %>%
   mutate(Family2 = case_when(Source == "AV" ~ "This Study",
                              Family %in% vir.fam.clust$Family ~ as.character(Family),
                              TRUE ~ "Other")) %>% 
@@ -955,24 +1003,26 @@ vir.hab.nodes <- clstrd.nodes %>%
   left_join(select(combo, checkv_quality, contig_length, Rocks_v2, VCStatus), by = c("VC" = "VCStatus")) %>%
   filter(!checkv_quality %in% c("Not-determined")) %>%
   filter(is.na(contig_length) | contig_length >= 10000) %>%
+  left_join(select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!max_score_group %in% c("NCLDV")) %>%
   mutate(Rocks_v2 = ifelse(is.na(Rocks_v2), "Unknown", as.character(Rocks_v2))) #%>%
 # filter(Source == "refseq" | ClstrComp == "both") 
 
-vir.hab.nodes <- vir.hab.nodes[-c(66:67)]
+vir.hab.nodes <- vir.hab.nodes[-c(66:67,69)]
 
 
 # Plot
 ntwk.hab.vir.hq <-  vir.hab.nodes %>% 
   ggplot(aes(x, y)) +
   geom_line(data = filter(edges, Genome %in% vir.hab.nodes$Genome), aes(group = Pair), alpha = 0.1, color = "gray25", size = 0.5) +
-  geom_point(alpha = 0.8, size = 2, shape = 16, aes(color = Rocks_v2)) +
-  scale_color_manual(name = "Rock Type",
+  geom_point(alpha = 0.8, size = 1, shape = 16, aes(color = Rocks_v2)) +
+  scale_color_manual(name = "Rock type",
                      values =  c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "gray75", "#0072B2", "#D55E00", "#CC79A7")) +
   theme_minimal() +
   theme(axis.text = element_blank(),
         axis.title = element_blank(),
         panel.grid = element_blank(),
-        legend.position = "right") + 
+        legend.position = "left") +
   guides(color = guide_legend(override.aes=list(shape = 16, size=4)))
 
 
@@ -994,6 +1044,8 @@ meta.sub.rock <- combo %>%
   filter(!checkv_quality %in% c("Not-determined")) %>%
   filter(contig_length >= 10000) %>%
   filter(ClusterStatus == "Clustered") %>%
+  left_join(select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!max_score_group %in% c("NCLDV")) %>%
   group_by(Rocks_v2, Order) %>%
   mutate(Order = ifelse(Order == "Unassigned", "Unique VC", "VC with reference genomes")) %>%
   tally()  %>% 
@@ -1025,6 +1077,18 @@ tax.meta.vcs <- combo %>%
   mutate(n2 = sum(n)) %>%
   mutate(lab_ypos = n2 + 3)
 
+test <- combo %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(contig_length >= 10000) %>%
+  filter(ClusterStatus == "Clustered" & Order != "Unassigned") %>%
+  mutate(Family = ifelse(Family == "Mixed", "Unclassified", as.character(Family))) %>%
+  group_by(Family) %>%
+  tally() %>% 
+  arrange(desc(n)) %>% 
+  group_by(Family) %>%
+  mutate(n2 = sum(n)) %>%
+  mutate(lab_ypos = n2 + 3)
+
 e_tax <- ggplot(tax.meta.vcs, aes(x = Family, fill = Family, y=n)) + 
   theme_bw() +
   geom_bar(stat="identity", position="stack", width=.6) + 
@@ -1036,9 +1100,9 @@ e_tax <- ggplot(tax.meta.vcs, aes(x = Family, fill = Family, y=n)) +
 
 
 
-( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) + plot_annotation(tag_levels = "A") 
+#( ntwk.hab.vir.hq + a_hab_seq ) / (ntwk.vir + e_tax ) + plot_annotation(tag_levels = "A") 
 
-ggsave(filename = 'plots/exploratory/ant_network_plus_VC.png', plot = last_plot(), device = 'png', width = 14, height = 9, dpi = 300)
+#ggsave(filename = 'plots/exploratory/ant_network_plus_VC.png', plot = last_plot(), device = 'png', width = 14, height = 9, dpi = 300)
 
 
 ```
@@ -1090,7 +1154,7 @@ host.gen.tax.meta.plotdata <- host.gen.tax.meta.high %>%
   arrange(desc(n)) %>% 
   group_by(HostPhylum) %>%
   mutate(n2 = sum(n)) %>%
-  mutate(lab_ypos = n2 + 3)
+  mutate(lab_ypos = n2 + 3) 
 
 
 host_plot <- ggplot(host.gen.tax.meta.plotdata, aes(x = HostPhylum, fill = HostPhylum, y=n)) + 
@@ -1115,10 +1179,12 @@ DAMG_data_un_HQ_counts <- DAMG_data_un_HQ %>%
 DAMG_data_un_HQ <- left_join(DAMG_data_un_HQ, DAMG_data_un_HQ_counts)
 
 DAMG_data_un_HQ.singleAnnot <- DAMG_data_un_HQ %>%
-  group_by(gene) %>%
+  group_by(filename, gene) %>%
   slice(1)
 
-AMGs <- left_join(DAMG_data_un_HQ.singleAnnot, host.gen.tax.meta.high) 
+AMGs <- left_join(DAMG_data_un_HQ.singleAnnot, host.gen.tax.meta.high) %>%
+  left_join(select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!max_score_group %in% c("NCLDV"))
 
 amg.plotdata <- AMGs %>%
   mutate(category = fct_explicit_na(category, na_level = "Unannotated"), 
@@ -1130,7 +1196,9 @@ amg.plotdata <- AMGs %>%
          category = ifelse(category == "MISC", "Information Systems", as.character(category)), 
          category = ifelse(category == "carbon utilization", "Carbon Utilization", as.character(category))) %>%
   group_by(category, header, module) %>%
-  tally() 
+  tally() %>% 
+  mutate(category = ifelse(category == "Unannotated", "No Classification", as.character(category))) %>%
+  mutate(category = factor(category, levels = c("Carbon Utilization", "Organic Nitrogen",  "Information Systems", "Transporters", "Energy", "No Classification")))
 
 amg_general <- ggplot(amg.plotdata, aes(x = category, fill = category, y=n)) + 
   theme_bw() +
@@ -1143,6 +1211,61 @@ amg_general <- ggplot(amg.plotdata, aes(x = category, fill = category, y=n)) +
 
 
 ```
+
+```{r include=FALSE}
+### DRAM-v AMG annotations
+
+#combine DRAM-v AMG annotation predictions
+
+DG_data_path <- "data/dramv_raw_annot/"   # path to the data
+Dannot_files <- dir(DG_data_path, pattern = "*annotations.tsv") # get file names
+
+Dannot_data <- data_frame(filename = Dannot_files) %>%
+  mutate(file_contents = map(filename,         
+                             ~ read_tsv(file.path(DG_data_path, .)))) 
+
+
+Dannot_data_un <- unnest(Dannot_data, cols = c(file_contents))
+
+Dannot_data_un <- Dannot_data_un %>% 
+  mutate_at("filename", str_replace, "_annotations.tsv", "")
+
+#fixing viral genome names
+Dannot_data_un <- Dannot_data_un %>% 
+  mutate_at("scaffold", str_replace, "-cat_1", "") %>%
+  mutate_at("scaffold", str_replace, "-cat_2", "") %>%
+  mutate_at("scaffold", str_replace, "-cat_3", "") %>%
+  mutate_at("scaffold", str_replace, "__", "||") %>%
+  mutate(Genome = paste0(filename, ".", scaffold))
+
+Dannot_data_un_filt <- Dannot_data_un %>%
+  mutate(GENE = paste0(filename, ...1)) %>%
+  filter(GENE %in% paste0(AMGs$filename, AMGs$gene)) %>%
+  filter(!is.na(amg_flags))
+
+AMGs$GENE <- paste0(AMGs$filename, AMGs$gene)
+
+Dannot_data_un_filt_sum <- Dannot_data_un_filt%>%
+  group_by(GENE) %>%
+  summarise(kegg = is.na(kegg_hit),
+            pfam = is.na(pfam_hits),
+            cazy = is.na(cazy_hits),
+            vogdb = is.na(vogdb_description),
+            viral = is.na(viral_hit),
+            pep = is.na(peptidase_hit), 
+            all = is.na(kegg_hit) | is.na(pfam_hits) | is.na(cazy_hits) |is.na(vogdb_description) | is.na(viral_hit) | is.na(peptidase_hit),
+            pfam_only = ifelse(pfam == FALSE, ifelse(kegg == TRUE & cazy == TRUE & vogdb == TRUE & viral == TRUE & pep == TRUE, "TRUE", "FALSE"), "FALSE")) %>%
+  left_join(select(AMGs, GENE, category)) %>%
+  filter(is.na(category)) %>%
+  left_join(Dannot_data_un_filt)
+  
+
+saveRDS(DAMG_data_un, "results/processed_data/dram_amg_results.RDS")
+write_csv(DAMG_data_un, "results/processed_data/dram_amg_results.csv")
+
+
+```
+
 
 ```{r maghost_plot}
 
@@ -1232,8 +1355,8 @@ ggplot(host.plotdata, aes(x = HostPhylum, fill = HostPhylum, y=n)) +
   xlab("")  +  theme(legend.position = "none") + 
   coord_flip() + scale_x_discrete(limits=rev) 
 
-ggsave(filename = 'plots/figs1.pdf', plot = last_plot(), device = 'pdf', width = 6, height = 4, dpi = 300)
-ggsave(filename = 'plots/figs1.png', plot = last_plot(), device = 'png', width = 6, height = 4, dpi = 300)
+ggsave(filename = 'plots/figs2.pdf', plot = last_plot(), device = 'pdf', width = 6, height = 4, dpi = 300)
+ggsave(filename = 'plots/figs2.png', plot = last_plot(), device = 'png', width = 6, height = 4, dpi = 300)
 
 ```
 
@@ -1270,12 +1393,13 @@ host.combo.plotdata <- host.combo %>%
   arrange(desc(n)) %>% 
   group_by(ComboPhylum_MAG) %>%
   mutate(n2 = sum(n)) %>%
-  mutate(lab_ypos = n2 + 3)
+  mutate(lab_ypos = n2 + 3) %>%
+  mutate(ComboPhylum_MAG = factor(ComboPhylum_MAG, levels = c("Proteobacteria", "Actinobacteriota", "Chloroflexota", "Armatimonadota", "Bacteroidota", "Acidobacteriota", "Planctomycetota", "Eremiobacterota", "Cyanobacteria", "Deinococcota", "Verrucomicrobiota", "Gemmatimonadota", "Firmicutes", "Bacteria incertae sedis")))
 
 ComboPhylum_MAG_plot <- ggplot(host.combo.plotdata, aes(x = ComboPhylum_MAG, fill = ComboPhylum_MAG, y=n)) + 
   theme_bw() +
   geom_bar(stat="identity", position="stack", width=.6) + 
-  scale_fill_viridis_d(option="B") +
+  scale_fill_viridis_d(option="B", direction = -1) +
   ylab("Number of viral sequences") + 
   xlab("")  +  theme(legend.position = "none") + 
   coord_flip() + scale_x_discrete(limits=rev) #+
@@ -1289,14 +1413,41 @@ ggsave(filename = 'plots/exploratory/host_combo_mag.pdf', plot = last_plot(), de
 ```
 
 
-# Combined Fig 1
 
-```{r fig1_plot, fig.width=14, fig.height=8}
-# Figure 1
-(ntwk.vir + e_tax ) / ( ntwk.hab.vir.hq + a_hab_seq ) / (ComboPhylum_MAG_plot + amg_general) + plot_annotation(tag_levels = "A") 
 
-ggsave(filename = 'plots/fig1.pdf', plot = last_plot(), device = 'pdf', width = 14, height = 8, dpi = 300)
-ggsave(filename = 'plots/fig1.png', plot = last_plot(), device = 'png', width = 14, height = 8, dpi = 300)
+# Combined Fig 1 & Fig S1
+
+```{r fig1_plot, fig.width=9, fig.height=6}
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 10, spaceLegend = 0.5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# Figure 1 
+
+# fig1_plot <- ((guide_area() + (addSmallLegend(ntwk.hab.vir.hq) + plot_layout(guides = 'collect'))) + a_hab_seq  + plot_layout(widths = c(1,6,12))) / (plot_spacer() + ComboPhylum_MAG_plot + amg_general + plot_layout(widths = c(1,9,9))) + plot_annotation(tag_levels = "A") 
+
+
+#remove network
+fig1_plot <- a_hab_seq  / (ComboPhylum_MAG_plot + amg_general) + plot_annotation(tag_levels = "A")  + plot_layout(heights = c(2,3))
+
+fig1_plot
+
+ggsave(filename = 'plots/fig1.pdf', plot = fig1_plot, device = 'pdf', width = 9, height = 6, dpi = 300)
+ggsave(filename = 'plots/fig1.png', plot = fig1_plot, device = 'png', width = 9, height = 6, dpi = 300)
+
+# Figure S1 
+ntwk.vir + e_tax + plot_annotation(tag_levels = "A") 
+
+ggsave(filename = 'plots/figs1.pdf', plot = last_plot(), device = 'pdf', width = 8, height = 3, dpi = 300)
+ggsave(filename = 'plots/figs1.png', plot = last_plot(), device = 'png', width = 8, height = 3, dpi = 300)
+
+
 ```
 
 # Figure 2
@@ -1317,6 +1468,15 @@ votus.long <- checkv_cdhit_tax$votu.id[checkv_cdhit_tax$contig_length >= 10000]
 
 ps.HQ <- prune_taxa(votus.high, ps)
 ps.HQ.long <-  prune_taxa(votus.long, ps.HQ)
+
+votus.euk <- (left_join(combo, select(VS_data_un, Genome, max_score_group)) %>%
+  filter(!checkv_quality %in% c("Not-determined")) %>%
+  filter(is.na(contig_length) | contig_length >= 10000) %>%
+  filter(!is.na(votu.id))  %>%
+  filter(!max_score_group %in% c("NCLDV")))$votu.id
+
+ps.HQ.long <-  prune_taxa(votus.euk, ps.HQ.long)
+
 
 ps.RA <- transform_sample_counts(ps.HQ.long,  function(x) x/sum(x))
 
@@ -1355,7 +1515,7 @@ site_bar_ra <- plot_s + theme_bw() +
   theme(text = element_text(size = 14)) +
   ylab("Mean Relative Abundance") + xlab("")  +
   guides(fill = guide_legend(title = "Family")) +
-  scale_fill_viridis_d() #+  theme(legend.position = "none") +
+  scale_fill_viridis_d(option="H") #+  theme(legend.position = "none") +
   #theme(axis.text.x = element_text(angle = -70, hjust = 0, vjust = 0.5)) 
 
 site_bar_ra + coord_flip()
@@ -1591,7 +1751,7 @@ mantel.stats <- data.frame(label = paste("r = ", signif(mantel.test.hell$statist
 dist_hell <- ggplot(mapping = aes(x = jitter(dist.geo/1000, amount = 1), y = comm.dist.hell)) + 
   theme_bw() +
   geom_point(shape = 16, size = 1, alpha = 0.1, color = "gray25") + 
-  geom_smooth(method = "lm", color ="#0292e3", se=F) + 
+  geom_smooth(method = "lm", color ="orange", se=F) + 
   labs(x = "Geographical Separation (km)", y = "Hellinger Distance") +  geom_text(data = mantel.stats, aes(x = 475, y = .15, label = label), hjust = 0, size = 3) +
   theme(text = element_text(size = 14)) 
 
@@ -1662,26 +1822,17 @@ ggsave(filename = 'plots/exploratory/art_map.png', plot = last_plot(), device = 
 ```
 
 # Figure 2
-```{r fig2_plots, fig.width=20, fig.height=10}
-
-addSmallLegend <- function(myPlot, pointSize = 3, textSize = 10, spaceLegend = 0.5) {
-    myPlot +
-        guides(shape = guide_legend(override.aes = list(size = pointSize)),
-               color = guide_legend(override.aes = list(size = pointSize))) +
-        theme(legend.title = element_text(size = textSize), 
-              legend.text  = element_text(size = textSize),
-              legend.key.size = unit(spaceLegend, "lines"))
-}
-
+```{r fig2_plots, fig.width=11.5, fig.height=9}
 
 #flip RA plot
 site_flip <- site_bar_ra + coord_flip() 
 
-(addSmallLegend(as.big.nocol +  theme(legend.position="top"))) / (addSmallLegend(site_flip +  theme(legend.position="left")) + ((addSmallLegend(site_pcoa) / dist_hell ) )) +  
+
+((addSmallLegend(as.big.nocol +  theme(legend.position="top"))+ plot_layout(guides = "keep")) / ((addSmallLegend(site_flip) + ((addSmallLegend(site_pcoa) / dist_hell ) )) )) + plot_layout(guides = "collect", heights = c(1,4)) +
   plot_annotation(tag_levels = "A")
 
-ggsave(filename = 'plots/fig2.pdf', plot = last_plot(), device = 'pdf', width = 20, height = 10, dpi = 300)
-ggsave(filename = 'plots/fig2.png', plot = last_plot(), device = 'png', width = 20, height = 10, dpi = 300)
+ggsave(filename = 'plots/fig2.pdf', plot = last_plot(), device = 'pdf', width = 11.5, height = 9, dpi = 300)
+ggsave(filename = 'plots/fig2.png', plot = last_plot(), device = 'png', width = 11.5, height = 9, dpi = 300)
 
 
 #without map
@@ -1704,7 +1855,7 @@ combo2 <- combo %>%
   filter(!is.na(votu.id))
 
 #total number of unique VCs
-length(unique(combo2$VCStatus)) -1 #Unclustered
+length(unique(combo2$VCStatus)) - tot_NCLDV[1] - 1 #Unclustered
 
 #total number of vOTUs
 length(unique(combo2$votu.id))
@@ -1780,7 +1931,7 @@ combo.filt <- combo %>%
   filter(!is.na(votu.id))
 
 #total number of unique VCs
-length(unique(combo.filt$VCStatus)) -1 #Unclustered
+length(unique(combo.filt$VCStatus)) - filt_NCLDV[1] -1 #Unclustered
 
 #total number of vOTUs
 length(unique(combo.filt$votu.id))
