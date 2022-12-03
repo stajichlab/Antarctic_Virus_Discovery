@@ -1939,7 +1939,10 @@ length(unique(combo.filt$votu.id))
 #total number of viral seqs
 length(unique(combo.filt$Genome))
 
+
 checkv_cdhit_tax.meta.samplesum.filt <- combo.filt %>%
+    mutate(VCStatus = ifelse(votu.id %in% votus.euk,  as.character(VCStatus), 'Unclustered')) %>%
+    mutate(VCStatus = ifelse(VCStatus == 'Unclustered', 'NA', as.character(VCStatus))) %>%
     group_by(SampleID) %>%
     summarise(contig_length_avg = mean(contig_length), 
               gene_count_avg = mean(gene_count),
